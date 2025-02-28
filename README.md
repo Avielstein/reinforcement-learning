@@ -2,7 +2,6 @@
 
 A real-time tactical combat simulation that visualizes radar-based detection and combat between multiple teams of units. Watch as units autonomously patrol, detect enemies, engage in combat, and employ evasive maneuvers.
 
-![Tactical Radar Combat Simulator](https://github.com/your-username/tactical-radar-simulator/raw/main/screenshot.png)
 
 ## Features
 
