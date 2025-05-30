@@ -32,10 +32,14 @@ The dot-follow environment extends the basic fish tank simulation by introducing
 ```
 dot-follow/
 ├── README.md                           # This file
-├── train_dot_follow.ipynb             # Main training notebook
+├── train_model.py                     # Main training script (random walk focus)
 ├── dot_follow_environment.py          # Environment and target movement logic
 ├── dot_follow_trainer.py              # A2C trainer specialized for dot following
-└── dot_follow_visualization.py        # Interactive training visualization
+├── dot_follow_visualization.py        # Interactive training visualization
+├── start_web_interface.py             # Web interface launcher
+├── web_server.py                      # Flask web server
+└── models/                            # Saved trained models
+    └── best_dot_follow_model.pt       # Best trained model
 ```
 
 ## Quick Start
@@ -48,8 +52,15 @@ pip install torch gymnasium matplotlib numpy jupyter
 ### Basic Training
 ```bash
 cd tank-sim/dot-follow
-jupyter notebook train_dot_follow.ipynb
+python train_model.py
 ```
+
+### Web Interface
+```bash
+cd tank-sim/dot-follow
+python start_web_interface.py
+```
+Then open http://localhost:5000 in your browser.
 
 ### Interactive Training with Visualization
 ```python
@@ -140,11 +151,21 @@ total_reward = proximity_reward + velocity_penalty + wall_penalty
 
 ## Training Features
 
+### Python Training Script
+- **Simple Execution**: Single Python script that handles everything
+- **Primary Training**: Focused on random walk pattern (most challenging and generalizable)
+- **Comprehensive Testing**: Evaluation across all movement patterns
+- **Model Persistence**: Automatic saving of best models for web interface
+- **Progress Tracking**: Real-time visualization of training metrics
+- **Early Stopping**: Intelligent training termination to prevent overfitting
+- **Error Handling**: Robust import checking and graceful error recovery
+
 ### Interactive Visualization
 - **Real-time Training**: Watch the fish learn to follow the target
 - **Pattern Switching**: Change target movement patterns during training using buttons
 - **Performance Metrics**: Live plots of reward and distance to target
 - **Trail Visualization**: See both fish and target movement trails
+- **Web Interface**: Interactive browser-based testing and visualization
 
 ### Curriculum Learning
 Train on progressively more difficult patterns:

@@ -37,8 +37,13 @@ class ActorCritic(nn.Module):
             act = dist.sample()
             logp = dist.log_prob(act).sum(-1)
             val = self.v(obs).squeeze(-1)
-        return act.numpy(), logp.numpy(), val.numpy()
+        return act.detach().cpu().numpy(), logp.detach().cpu().numpy(), val.detach().cpu().numpy()
     
     def act(self, obs):
         """Get action only (for evaluation)"""
-        return self.step(obs)[0]
+        with torch.no_grad():
+            mu = self.pi(obs)
+            std = self.log_std.exp()
+            dist = torch.distributions.Normal(mu, std)
+            act = dist.sample()
+        return act.detach().cpu().numpy()
