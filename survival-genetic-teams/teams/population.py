@@ -127,6 +127,13 @@ class Population:
             team.status = TeamStatus.ELIMINATED
             self.eliminated_teams.append(team)
             
+            # Log elimination reason
+            survivors = len(team.get_alive_agents())
+            if survivors < self.config.MIN_SURVIVORS_TO_CONTINUE:
+                print(f"🚫 Team {team_id} eliminated: Only {survivors} survivors (need {self.config.MIN_SURVIVORS_TO_CONTINUE})")
+            else:
+                print(f"🚫 Team {team_id} eliminated: Poor performance over {self.config.ELIMINATION_GENERATIONS} generations")
+            
             # Remove from active teams but keep for statistics
             del self.teams[team_id]
     

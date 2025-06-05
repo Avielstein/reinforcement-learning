@@ -15,7 +15,10 @@ class WebInterface:
     """Web interface for the survival simulation"""
     
     def __init__(self):
-        self.app = Flask(__name__, template_folder='../visualization/web_interface')
+        self.app = Flask(__name__, 
+                        template_folder='../visualization/web_interface',
+                        static_folder='../visualization/web_interface',
+                        static_url_path='')
         self.config = Config()
         self.runner = None
         self.simulation_thread = None

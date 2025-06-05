@@ -17,6 +17,7 @@ class Config:
     MAX_TEAM_SIZE = 8
     STARTING_TEAM_SIZE = 5  # Larger starting teams
     SPLIT_THRESHOLD = 8  # Split team when it reaches this size
+    MIN_SURVIVORS_TO_CONTINUE = 2  # Minimum survivors needed to continue to next episode
     
     # Agent Settings
     AGENT_SPEED = 8.0  # Much faster movement

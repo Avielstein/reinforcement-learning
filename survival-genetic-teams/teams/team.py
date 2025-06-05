@@ -230,8 +230,14 @@ class Team:
             survival_rate: Survival rate from last episode
         """
         current_size = len(self.agents)
+        survivors = len(self.get_alive_agents())
         
-        # Check for team elimination
+        # Check for team elimination based on minimum survivors requirement
+        if survivors < self.config.MIN_SURVIVORS_TO_CONTINUE:
+            self.status = TeamStatus.ELIMINATED
+            return
+        
+        # Check for team elimination based on consecutive poor performance
         if survival_rate == 0.0 and self.performance.total_eliminations >= self.config.ELIMINATION_GENERATIONS:
             self.status = TeamStatus.ELIMINATED
             return
