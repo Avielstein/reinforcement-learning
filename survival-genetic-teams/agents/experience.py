@@ -275,19 +275,112 @@ class TeamExperienceManager:
         if len(self.agent_buffers) < 2:
             return 0.0
         
-        # Simple diversity measure based on action variance
+        # Multiple diversity measures for robustness
+        diversity_scores = []
+        
+        # 1. Action-based diversity
+        action_diversity = self._calculate_action_diversity()
+        if action_diversity > 0:
+            diversity_scores.append(action_diversity)
+        
+        # 2. Performance-based diversity
+        performance_diversity = self._calculate_performance_diversity()
+        if performance_diversity > 0:
+            diversity_scores.append(performance_diversity)
+        
+        # 3. Behavioral pattern diversity
+        pattern_diversity = self._calculate_pattern_diversity()
+        if pattern_diversity > 0:
+            diversity_scores.append(pattern_diversity)
+        
+        # Return average of available diversity measures
+        if diversity_scores:
+            return np.mean(diversity_scores)
+        
+        # Fallback: if no experience data, use agent count as proxy
+        return min(0.5, len(self.agent_buffers) / 10.0)
+    
+    def _calculate_action_diversity(self) -> float:
+        """Calculate diversity based on action variance"""
         all_actions = []
         
         for buffer in self.agent_buffers.values():
-            recent_episodes = buffer.get_recent_episodes(3)
+            recent_episodes = buffer.get_recent_episodes(5)  # Look at more episodes
             for episode in recent_episodes:
                 for experience in episode.experiences:
                     all_actions.append(experience.action)
         
-        if len(all_actions) < 2:
+        if len(all_actions) < 10:  # Need sufficient data
             return 0.0
         
         actions_array = np.array(all_actions)
+        
         # Calculate variance across all action dimensions
         variances = np.var(actions_array, axis=0)
-        return np.mean(variances)
+        mean_variance = np.mean(variances)
+        
+        # Scale to 0-1 range (assuming actions are roughly in 0-1 range)
+        return min(1.0, mean_variance * 10.0)
+    
+    def _calculate_performance_diversity(self) -> float:
+        """Calculate diversity based on performance differences"""
+        agent_performances = []
+        
+        for buffer in self.agent_buffers.values():
+            metrics = buffer.calculate_performance_metrics()
+            if metrics and 'average_reward' in metrics:
+                agent_performances.append(metrics['average_reward'])
+        
+        if len(agent_performances) < 2:
+            return 0.0
+        
+        # Calculate coefficient of variation (std/mean)
+        mean_perf = np.mean(agent_performances)
+        std_perf = np.std(agent_performances)
+        
+        if mean_perf == 0:
+            return 0.0
+        
+        cv = std_perf / abs(mean_perf)
+        return min(1.0, cv)
+    
+    def _calculate_pattern_diversity(self) -> float:
+        """Calculate diversity based on behavioral patterns"""
+        agent_patterns = []
+        
+        for buffer in self.agent_buffers.values():
+            recent_episodes = buffer.get_recent_episodes(3)
+            if not recent_episodes:
+                continue
+            
+            # Extract behavioral patterns
+            total_moves = 0
+            total_attacks = 0
+            total_rewards = 0
+            
+            for episode in recent_episodes:
+                for exp in episode.experiences:
+                    # Assume action array: [move_x, move_y, speed, attack_prob]
+                    if len(exp.action) >= 4:
+                        move_magnitude = np.sqrt(exp.action[0]**2 + exp.action[1]**2)
+                        total_moves += move_magnitude
+                        total_attacks += exp.action[3]  # attack probability
+                        total_rewards += exp.reward
+            
+            if len(recent_episodes) > 0:
+                pattern = [
+                    total_moves / len(recent_episodes),
+                    total_attacks / len(recent_episodes),
+                    total_rewards / len(recent_episodes)
+                ]
+                agent_patterns.append(pattern)
+        
+        if len(agent_patterns) < 2:
+            return 0.0
+        
+        patterns_array = np.array(agent_patterns)
+        variances = np.var(patterns_array, axis=0)
+        mean_variance = np.mean(variances)
+        
+        # Scale appropriately
+        return min(1.0, mean_variance / 10.0)

@@ -254,8 +254,21 @@ class EpisodeRunner:
                     nearby_agents = self.environment._get_nearby_agents(agent)
                     next_observation = agent.get_observation(nearby_agents)
                 
-                # Record experience
+                # Record experience in agent's buffer
                 agent.record_experience(observation, action, reward, next_observation, done)
+                
+                # Also record in team experience manager for diversity calculation
+                team_id = agent.team_id
+                active_teams = self.population.get_active_teams()
+                if team_id in active_teams:
+                    team = active_teams[team_id]
+                    obs_array = observation.to_array() if hasattr(observation, 'to_array') else observation
+                    action_array = action.to_array() if hasattr(action, 'to_array') else action
+                    next_obs_array = next_observation.to_array() if next_observation and hasattr(next_observation, 'to_array') else None
+                    
+                    team.experience_manager.add_agent_experience(
+                        agent_id, obs_array, action_array, reward, next_obs_array, done, self.current_step
+                    )
     
     def _print_episode_summary(self, episode_result):
         """Print summary of completed episode"""

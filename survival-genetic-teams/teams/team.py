@@ -81,6 +81,10 @@ class Team:
         # Experience management
         self.experience_manager = TeamExperienceManager(team_id)
         
+        # Cached diversity score (updated only after episodes)
+        self._cached_diversity_score = 0.0
+        self._diversity_needs_update = True
+        
         # Agent ID counter for this team
         self._next_agent_id = team_id * 1000  # Ensure unique IDs across teams
         
@@ -218,6 +222,9 @@ class Team:
         for agent in self.agents:
             survived = agent.is_alive()
             agent.end_episode(survived)
+        
+        # Mark diversity cache for update (will be calculated when needed)
+        self._update_diversity_cache()
         
         # Determine if team evolution is needed
         self._evolve_team(survival_rate)
@@ -376,9 +383,11 @@ class Team:
     def get_team_summary(self) -> Dict:
         """Get summary information about the team"""
         alive_count = len(self.get_alive_agents())
+        diversity_score = self.get_diversity_score()
         
         return {
             'team_id': self.team_id,
+            'id': self.team_id,  # Add 'id' for consistency with web interface
             'color': self.color,
             'status': self.status.value,
             'generation': self.generation,
@@ -388,12 +397,21 @@ class Team:
             'average_survival_rate': self.performance.average_survival_rate,
             'episodes_since_growth': self.performance.episodes_since_growth,
             'episodes_since_decline': self.performance.episodes_since_decline,
-            'total_eliminations': self.performance.total_eliminations
+            'total_eliminations': self.performance.total_eliminations,
+            'diversity_score': diversity_score
         }
     
     def get_diversity_score(self) -> float:
-        """Calculate behavioral diversity within the team"""
-        return self.experience_manager.calculate_team_diversity()
+        """Get cached diversity score (calculated only after episodes)"""
+        if self._diversity_needs_update:
+            self._cached_diversity_score = self.experience_manager.calculate_team_diversity()
+            self._diversity_needs_update = False
+        
+        return self._cached_diversity_score
+    
+    def _update_diversity_cache(self):
+        """Mark diversity cache as needing update"""
+        self._diversity_needs_update = True
     
     def save_best_policies(self, directory: str):
         """Save policies of best performing agents"""
