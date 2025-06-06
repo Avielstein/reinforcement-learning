@@ -7,6 +7,18 @@ let simulationData = {};
 let familyTreeData = {};
 let currentZoom = 1.0;
 let currentTab = 'simulation';
+let isFullScreen = false;
+let canvasZoom = 1.0;
+let canvasOffsetX = 0;
+let canvasOffsetY = 0;
+let isDragging = false;
+let lastMouseX = 0;
+let lastMouseY = 0;
+let learningAnalytics = {
+    episodeData: [],
+    teamPerformanceHistory: {},
+    policyEvolutionData: {}
+};
 
 // Initialize canvas and components
 window.onload = function() {
@@ -684,4 +696,427 @@ function resetConfig() {
     document.getElementById('mutationRate').value = 0.1;
     
     addLog('Configuration reset to defaults', 'info');
+}
+
+// Full-screen functionality
+function toggleFullScreen() {
+    const simulationArea = document.querySelector('.simulation-area');
+    const canvasContainer = document.querySelector('.canvas-container');
+    
+    if (!isFullScreen) {
+        // Enter full-screen mode
+        isFullScreen = true;
+        
+        // Add full-screen classes
+        simulationArea.classList.add('fullscreen-container');
+        
+        // Add full-screen controls
+        const controls = document.createElement('div');
+        controls.className = 'fullscreen-controls';
+        controls.innerHTML = `
+            <button onclick="exitFullScreen()">Exit Full Screen</button>
+            <button onclick="resetCanvasView()">Reset View</button>
+        `;
+        canvasContainer.appendChild(controls);
+        
+        // Add zoom controls
+        const zoomControls = document.createElement('div');
+        zoomControls.className = 'canvas-zoom-controls';
+        zoomControls.innerHTML = `
+            <button class="zoom-btn" onclick="zoomCanvas(-0.2)">−</button>
+            <span class="zoom-level" id="canvasZoomLevel">100%</span>
+            <button class="zoom-btn" onclick="zoomCanvas(0.2)">+</button>
+        `;
+        canvasContainer.appendChild(zoomControls);
+        
+        // Resize canvas to full screen
+        resizeCanvasToFullScreen();
+        
+        // Add mouse controls
+        addCanvasMouseControls();
+        
+        addLog('Entered full-screen mode', 'info');
+    }
+}
+
+function exitFullScreen() {
+    if (isFullScreen) {
+        isFullScreen = false;
+        
+        // Remove full-screen classes
+        document.querySelector('.simulation-area').classList.remove('fullscreen-container');
+        
+        // Remove full-screen controls
+        const controls = document.querySelector('.fullscreen-controls');
+        const zoomControls = document.querySelector('.canvas-zoom-controls');
+        if (controls) controls.remove();
+        if (zoomControls) zoomControls.remove();
+        
+        // Reset canvas size
+        canvas.width = 800;
+        canvas.height = 400;
+        
+        // Reset zoom and pan
+        canvasZoom = 1.0;
+        canvasOffsetX = 0;
+        canvasOffsetY = 0;
+        
+        // Remove mouse controls
+        removeCanvasMouseControls();
+        
+        addLog('Exited full-screen mode', 'info');
+    }
+}
+
+function resizeCanvasToFullScreen() {
+    const container = document.querySelector('.canvas-container');
+    const rect = container.getBoundingClientRect();
+    
+    canvas.width = rect.width * 0.95;
+    canvas.height = rect.height * 0.9;
+    
+    addLog(`Canvas resized to ${canvas.width}x${canvas.height}`, 'info');
+}
+
+function zoomCanvas(delta) {
+    canvasZoom = Math.max(0.5, Math.min(3.0, canvasZoom + delta));
+    document.getElementById('canvasZoomLevel').textContent = Math.round(canvasZoom * 100) + '%';
+    addLog(`Canvas zoom: ${Math.round(canvasZoom * 100)}%`, 'info');
+}
+
+function resetCanvasView() {
+    canvasZoom = 1.0;
+    canvasOffsetX = 0;
+    canvasOffsetY = 0;
+    document.getElementById('canvasZoomLevel').textContent = '100%';
+    addLog('Canvas view reset', 'info');
+}
+
+function addCanvasMouseControls() {
+    canvas.addEventListener('mousedown', handleCanvasMouseDown);
+    canvas.addEventListener('mousemove', handleCanvasMouseMove);
+    canvas.addEventListener('mouseup', handleCanvasMouseUp);
+    canvas.addEventListener('wheel', handleCanvasWheel);
+}
+
+function removeCanvasMouseControls() {
+    canvas.removeEventListener('mousedown', handleCanvasMouseDown);
+    canvas.removeEventListener('mousemove', handleCanvasMouseMove);
+    canvas.removeEventListener('mouseup', handleCanvasMouseUp);
+    canvas.removeEventListener('wheel', handleCanvasWheel);
+}
+
+function handleCanvasMouseDown(e) {
+    isDragging = true;
+    lastMouseX = e.clientX;
+    lastMouseY = e.clientY;
+    canvas.style.cursor = 'grabbing';
+}
+
+function handleCanvasMouseMove(e) {
+    if (isDragging) {
+        const deltaX = e.clientX - lastMouseX;
+        const deltaY = e.clientY - lastMouseY;
+        
+        canvasOffsetX += deltaX;
+        canvasOffsetY += deltaY;
+        
+        lastMouseX = e.clientX;
+        lastMouseY = e.clientY;
+    }
+}
+
+function handleCanvasMouseUp(e) {
+    isDragging = false;
+    canvas.style.cursor = 'grab';
+}
+
+function handleCanvasWheel(e) {
+    e.preventDefault();
+    const delta = e.deltaY > 0 ? -0.1 : 0.1;
+    zoomCanvas(delta);
+}
+
+// Enhanced Analytics Functions
+function updateLearningAnalytics(data) {
+    if (!data.population) return;
+    
+    // Track episode data
+    const episodeData = {
+        episode: data.episode || 0,
+        timestamp: Date.now(),
+        totalAgents: data.population.total_agents || 0,
+        aliveAgents: data.population.alive_agents || 0,
+        activeTeams: data.population.total_teams || 0,
+        avgSurvivalRate: data.population.statistics?.average_survival_rate || 0,
+        avgDiversity: data.population.insights?.average_diversity || 0,
+        generation: data.population.statistics?.generation || 0
+    };
+    
+    learningAnalytics.episodeData.push(episodeData);
+    
+    // Keep only last 100 episodes
+    if (learningAnalytics.episodeData.length > 100) {
+        learningAnalytics.episodeData.shift();
+    }
+    
+    // Track team performance history
+    if (data.population.teams) {
+        Object.values(data.population.teams).forEach(team => {
+            if (!learningAnalytics.teamPerformanceHistory[team.id]) {
+                learningAnalytics.teamPerformanceHistory[team.id] = [];
+            }
+            
+            learningAnalytics.teamPerformanceHistory[team.id].push({
+                episode: data.episode || 0,
+                survivalRate: team.survival_rate || 0,
+                size: team.size || 0,
+                diversity: team.diversity_score || 0,
+                generation: team.generation || 0
+            });
+            
+            // Keep only last 50 episodes per team
+            if (learningAnalytics.teamPerformanceHistory[team.id].length > 50) {
+                learningAnalytics.teamPerformanceHistory[team.id].shift();
+            }
+        });
+    }
+}
+
+function drawAdvancedAnalytics() {
+    const canvas = analyticsCanvas;
+    const ctx = analyticsCtx;
+    
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    if (learningAnalytics.episodeData.length < 2) {
+        ctx.fillStyle = '#4ecdc4';
+        ctx.font = '18px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('Collecting data...', canvas.width / 2, canvas.height / 2);
+        ctx.font = '14px Arial';
+        ctx.fillText('Run simulation for a few episodes to see analytics', canvas.width / 2, canvas.height / 2 + 25);
+        return;
+    }
+    
+    // Draw multiple charts
+    drawSurvivalRateChart(ctx, 0, 0, canvas.width / 2, canvas.height / 2);
+    drawPopulationChart(ctx, canvas.width / 2, 0, canvas.width / 2, canvas.height / 2);
+    drawDiversityChart(ctx, 0, canvas.height / 2, canvas.width / 2, canvas.height / 2);
+    drawTeamEvolutionChart(ctx, canvas.width / 2, canvas.height / 2, canvas.width / 2, canvas.height / 2);
+}
+
+function drawSurvivalRateChart(ctx, x, y, width, height) {
+    const data = learningAnalytics.episodeData;
+    const margin = 20;
+    const chartWidth = width - 2 * margin;
+    const chartHeight = height - 2 * margin;
+    
+    // Draw background
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
+    ctx.fillRect(x, y, width, height);
+    
+    // Draw title
+    ctx.fillStyle = '#4ecdc4';
+    ctx.font = '14px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('Survival Rate Trend', x + width / 2, y + 15);
+    
+    if (data.length < 2) return;
+    
+    // Find min/max values
+    const maxRate = Math.max(...data.map(d => d.avgSurvivalRate));
+    const minRate = Math.min(...data.map(d => d.avgSurvivalRate));
+    const range = maxRate - minRate || 1;
+    
+    // Draw chart
+    ctx.strokeStyle = '#4ecdc4';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    
+    data.forEach((point, index) => {
+        const chartX = x + margin + (index / (data.length - 1)) * chartWidth;
+        const chartY = y + margin + (1 - (point.avgSurvivalRate - minRate) / range) * chartHeight;
+        
+        if (index === 0) {
+            ctx.moveTo(chartX, chartY);
+        } else {
+            ctx.lineTo(chartX, chartY);
+        }
+    });
+    
+    ctx.stroke();
+    
+    // Draw axes labels
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+    ctx.font = '10px Arial';
+    ctx.textAlign = 'left';
+    ctx.fillText(`Max: ${(maxRate * 100).toFixed(1)}%`, x + 5, y + 30);
+    ctx.fillText(`Min: ${(minRate * 100).toFixed(1)}%`, x + 5, y + height - 5);
+}
+
+function drawPopulationChart(ctx, x, y, width, height) {
+    const data = learningAnalytics.episodeData;
+    const margin = 20;
+    
+    // Draw background
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
+    ctx.fillRect(x, y, width, height);
+    
+    // Draw title
+    ctx.fillStyle = '#ff6b6b';
+    ctx.font = '14px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('Population Dynamics', x + width / 2, y + 15);
+    
+    if (data.length < 2) return;
+    
+    const maxAgents = Math.max(...data.map(d => d.totalAgents));
+    const chartWidth = width - 2 * margin;
+    const chartHeight = height - 2 * margin;
+    
+    // Draw total agents line
+    ctx.strokeStyle = '#ff6b6b';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    
+    data.forEach((point, index) => {
+        const chartX = x + margin + (index / (data.length - 1)) * chartWidth;
+        const chartY = y + margin + (1 - point.totalAgents / maxAgents) * chartHeight;
+        
+        if (index === 0) {
+            ctx.moveTo(chartX, chartY);
+        } else {
+            ctx.lineTo(chartX, chartY);
+        }
+    });
+    
+    ctx.stroke();
+    
+    // Draw alive agents line
+    ctx.strokeStyle = '#4ecdc4';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    
+    data.forEach((point, index) => {
+        const chartX = x + margin + (index / (data.length - 1)) * chartWidth;
+        const chartY = y + margin + (1 - point.aliveAgents / maxAgents) * chartHeight;
+        
+        if (index === 0) {
+            ctx.moveTo(chartX, chartY);
+        } else {
+            ctx.lineTo(chartX, chartY);
+        }
+    });
+    
+    ctx.stroke();
+    
+    // Legend
+    ctx.fillStyle = '#ff6b6b';
+    ctx.font = '10px Arial';
+    ctx.textAlign = 'left';
+    ctx.fillText('Total', x + 5, y + 30);
+    ctx.fillStyle = '#4ecdc4';
+    ctx.fillText('Alive', x + 5, y + 45);
+}
+
+function drawDiversityChart(ctx, x, y, width, height) {
+    const data = learningAnalytics.episodeData;
+    const margin = 20;
+    
+    // Draw background
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
+    ctx.fillRect(x, y, width, height);
+    
+    // Draw title
+    ctx.fillStyle = '#ffeaa7';
+    ctx.font = '14px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('Genetic Diversity', x + width / 2, y + 15);
+    
+    if (data.length < 2) return;
+    
+    const maxDiversity = Math.max(...data.map(d => d.avgDiversity));
+    const chartWidth = width - 2 * margin;
+    const chartHeight = height - 2 * margin;
+    
+    ctx.strokeStyle = '#ffeaa7';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    
+    data.forEach((point, index) => {
+        const chartX = x + margin + (index / (data.length - 1)) * chartWidth;
+        const chartY = y + margin + (1 - point.avgDiversity / (maxDiversity || 1)) * chartHeight;
+        
+        if (index === 0) {
+            ctx.moveTo(chartX, chartY);
+        } else {
+            ctx.lineTo(chartX, chartY);
+        }
+    });
+    
+    ctx.stroke();
+    
+    // Show current diversity
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+    ctx.font = '10px Arial';
+    ctx.textAlign = 'left';
+    const currentDiversity = data[data.length - 1]?.avgDiversity || 0;
+    ctx.fillText(`Current: ${(currentDiversity * 100).toFixed(1)}%`, x + 5, y + height - 5);
+}
+
+function drawTeamEvolutionChart(ctx, x, y, width, height) {
+    const data = learningAnalytics.episodeData;
+    const margin = 20;
+    
+    // Draw background
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
+    ctx.fillRect(x, y, width, height);
+    
+    // Draw title
+    ctx.fillStyle = '#a29bfe';
+    ctx.font = '14px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('Team Evolution', x + width / 2, y + 15);
+    
+    if (data.length < 2) return;
+    
+    const maxTeams = Math.max(...data.map(d => d.activeTeams));
+    const maxGen = Math.max(...data.map(d => d.generation));
+    const chartWidth = width - 2 * margin;
+    const chartHeight = height - 2 * margin;
+    
+    // Draw active teams line
+    ctx.strokeStyle = '#a29bfe';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    
+    data.forEach((point, index) => {
+        const chartX = x + margin + (index / (data.length - 1)) * chartWidth;
+        const chartY = y + margin + (1 - point.activeTeams / (maxTeams || 1)) * chartHeight;
+        
+        if (index === 0) {
+            ctx.moveTo(chartX, chartY);
+        } else {
+            ctx.lineTo(chartX, chartY);
+        }
+    });
+    
+    ctx.stroke();
+    
+    // Show stats
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+    ctx.font = '10px Arial';
+    ctx.textAlign = 'left';
+    const currentData = data[data.length - 1];
+    ctx.fillText(`Teams: ${currentData?.activeTeams || 0}`, x + 5, y + 30);
+    ctx.fillText(`Gen: ${currentData?.generation || 0}`, x + 5, y + 45);
+}
+
+// Update the main updateAnalytics function to use new analytics
+function updateAnalytics() {
+    if (!simulationData.population) return;
+    
+    updateLearningAnalytics(simulationData);
+    drawAdvancedAnalytics();
 }

@@ -85,35 +85,199 @@ class Population:
         Args:
             episode_result: Results from the completed episode
         """
-        # Update all teams
-        teams_to_remove = []
-        teams_to_split = []
-        
+        # Update all teams first
         for team_id, team in self.teams.items():
             if team.is_active():
                 team.update_after_episode(episode_result)
-                
-                # Check for elimination
-                if team.status == TeamStatus.ELIMINATED:
-                    teams_to_remove.append(team_id)
-                
-                # Check for splitting
-                elif team.should_split():
-                    teams_to_split.append(team_id)
         
-        # Handle team eliminations
-        for team_id in teams_to_remove:
-            self._eliminate_team(team_id)
+        # Check for diversity preservation splitting BEFORE proportional allocation
+        self._check_diversity_preservation_splitting_pre_allocation(episode_result)
         
-        # Handle team splits
+        # Apply proportional team sizing based on survival performance
+        self._allocate_team_sizes_proportionally(episode_result)
+        
+        # Handle team splits after sizing
+        teams_to_split = []
+        for team_id, team in self.teams.items():
+            if team.is_active() and team.should_split():
+                teams_to_split.append(team_id)
+        
         for team_id in teams_to_split:
-            if team_id in self.teams:  # Team might have been eliminated
+            if team_id in self.teams:
                 self._split_team(team_id)
         
-        # Check if we need to create new teams
+        # Maintain minimum population
         self._maintain_population()
         
+        # Final safety check - ensure we never have just 2 teams
+        self._final_diversity_check()
+        
         self.generation += 1
+    
+    def _allocate_team_sizes_proportionally(self, episode_result: EpisodeResult):
+        """
+        Allocate team sizes proportionally based on survival performance
+        Eliminates teams with only 1 survivor, grows successful teams
+        
+        Args:
+            episode_result: Results from the completed episode
+        """
+        active_teams = self.get_active_teams()
+        if not active_teams:
+            return
+        
+        # Calculate target population size (maintain roughly same total)
+        current_total = sum(len(team.agents) for team in active_teams.values())
+        target_population = max(self.config.INITIAL_TEAMS * self.config.STARTING_TEAM_SIZE, 
+                               current_total)
+        
+        # Identify viable teams (>1 survivor) and eliminate others
+        viable_teams = {}
+        teams_to_eliminate = []
+        
+        for team_id, team in active_teams.items():
+            survivors = episode_result.team_survivors.get(team_id, 0)
+            if survivors <= 1:  # Eliminate teams with 0-1 survivors
+                teams_to_eliminate.append(team_id)
+                print(f"🚫 Team {team_id} eliminated: Only {survivors} survivor(s)")
+            else:
+                viable_teams[team_id] = {
+                    'team': team,
+                    'survivors': survivors,
+                    'initial_size': episode_result.team_initial_sizes.get(team_id, len(team.agents))
+                }
+        
+        # Remove eliminated teams
+        for team_id in teams_to_eliminate:
+            self._eliminate_team(team_id)
+        
+        if not viable_teams:
+            return
+        
+        # Calculate survival ratios for viable teams
+        total_survivors = sum(data['survivors'] for data in viable_teams.values())
+        
+        if total_survivors == 0:
+            return
+        
+        # Allocate new team sizes proportionally
+        for team_id, data in viable_teams.items():
+            team = data['team']
+            survivors = data['survivors']
+            
+            # Calculate proportional allocation
+            survival_ratio = survivors / total_survivors
+            new_size = max(2, int(survival_ratio * target_population))
+            
+            # Ensure we don't exceed maximum team size
+            new_size = min(new_size, self.config.MAX_TEAM_SIZE)
+            
+            # Resize the team
+            self._resize_team(team, new_size)
+            
+            print(f"📊 Team {team_id}: {len(team.agents)} → {new_size} agents "
+                  f"(survival ratio: {survival_ratio:.2f})")
+    
+    def _resize_team(self, team: Team, target_size: int):
+        """
+        Resize a team to the target size by adding or removing agents
+        
+        Args:
+            team: Team to resize
+            target_size: Desired team size
+        """
+        current_size = len(team.agents)
+        
+        if target_size > current_size:
+            # Grow team by cloning best performers
+            agents_to_add = target_size - current_size
+            best_agents = team._get_best_agents(min(3, current_size))
+            
+            for _ in range(agents_to_add):
+                if best_agents:
+                    parent = random.choice(best_agents)
+                    new_agent = parent.clone(team._get_next_agent_id())
+                    # Add mutation for diversity
+                    new_agent.mutate_policy(
+                        mutation_rate=self.config.MUTATION_RATE * 1.2
+                    )
+                    team.add_agent(new_agent)
+                    self.total_agents_created += 1
+        
+        elif target_size < current_size:
+            # Shrink team by removing worst performers
+            agents_to_remove = current_size - target_size
+            worst_agents = team._get_worst_agents(agents_to_remove)
+            
+            for agent in worst_agents:
+                team.remove_agent(agent.agent_id)
+    
+    def _check_diversity_preservation_splitting_pre_allocation(self, episode_result: EpisodeResult):
+        """
+        Check if only two teams would survive after elimination and split the larger one for diversity
+        This runs BEFORE proportional allocation to prevent getting stuck with just 2 teams
+        """
+        active_teams = self.get_active_teams()
+        
+        # Count how many teams would survive (have >1 survivor)
+        viable_teams = []
+        for team_id, team in active_teams.items():
+            survivors = episode_result.team_survivors.get(team_id, 0)
+            if survivors > 1:  # Teams with >1 survivor will survive
+                viable_teams.append((team_id, team, survivors))
+        
+        # If only 2 teams would survive, split the larger one
+        if len(viable_teams) == 2:
+            # Sort by team size to find the larger team
+            viable_teams.sort(key=lambda x: len(x[1].agents), reverse=True)
+            larger_team_id, larger_team, larger_survivors = viable_teams[0]
+            smaller_team_id, smaller_team, smaller_survivors = viable_teams[1]
+            
+            # Only split if the larger team has enough agents to split meaningfully
+            if len(larger_team.agents) >= 4:  # Need at least 4 to split into 2 viable teams
+                print(f"🔄 Pre-allocation diversity preservation: Only 2 teams would survive")
+                print(f"    Team {larger_team_id}: {larger_survivors} survivors, {len(larger_team.agents)} total")
+                print(f"    Team {smaller_team_id}: {smaller_survivors} survivors, {len(smaller_team.agents)} total")
+                print(f"    Splitting larger team {larger_team_id} to maintain competition")
+                
+                # Force split the larger team
+                new_team = larger_team.split_team(self._get_next_team_id())
+                if new_team is not None:
+                    self.teams[new_team.team_id] = new_team
+                    self.total_agents_created += len(new_team.agents)
+                    
+                    print(f"✅ Team {larger_team_id} split into teams "
+                          f"{larger_team_id} ({len(larger_team.agents)}) and "
+                          f"{new_team.team_id} ({len(new_team.agents)})")
+    
+    def _check_diversity_preservation_splitting(self):
+        """
+        Check if only two teams would survive and split the larger one for diversity
+        """
+        active_teams = self.get_active_teams()
+        
+        if len(active_teams) == 2:
+            # Get the two teams and their sizes
+            team_list = list(active_teams.values())
+            team1, team2 = team_list[0], team_list[1]
+            
+            # Find the larger team
+            larger_team = team1 if len(team1.agents) > len(team2.agents) else team2
+            
+            # Only split if the larger team has enough agents to split meaningfully
+            if len(larger_team.agents) >= 4:  # Need at least 4 to split into 2 viable teams
+                print(f"🔄 Diversity preservation: Splitting larger team {larger_team.team_id} "
+                      f"({len(larger_team.agents)} agents) to maintain competition")
+                
+                # Force split the larger team
+                new_team = larger_team.split_team(self._get_next_team_id())
+                if new_team is not None:
+                    self.teams[new_team.team_id] = new_team
+                    self.total_agents_created += len(new_team.agents)
+                    
+                    print(f"✅ Team {larger_team.team_id} split into teams "
+                          f"{larger_team.team_id} ({len(larger_team.agents)}) and "
+                          f"{new_team.team_id} ({len(new_team.agents)})")
     
     def _eliminate_team(self, team_id: int):
         """
@@ -161,7 +325,9 @@ class Population:
         active_teams = self.get_active_teams()
         
         # If we have too few teams, create new ones
-        min_teams = max(2, self.config.INITIAL_TEAMS // 2)
+        min_teams = max(3, self.config.INITIAL_TEAMS // 2)  # Ensure at least 3 teams
+        
+        print(f"🔍 Population maintenance: {len(active_teams)} active teams, need minimum {min_teams}")
         
         while len(active_teams) < min_teams:
             # Create new team by cloning a successful existing team
@@ -170,12 +336,16 @@ class Population:
                 best_team = max(active_teams.values(), 
                               key=lambda t: t.performance.average_survival_rate)
                 
+                print(f"🆕 Creating new team by cloning best team {best_team.team_id}")
                 new_team = self._clone_team(best_team)
                 self.teams[new_team.team_id] = new_team
                 active_teams[new_team.team_id] = new_team
                 self.total_agents_created += len(new_team.agents)
+                
+                print(f"✅ Created team {new_team.team_id} with {len(new_team.agents)} agents")
             else:
                 # No active teams, create from scratch
+                print(f"🆕 Creating new team from scratch")
                 new_team = Team(
                     team_id=self._get_next_team_id(),
                     config=self.config
@@ -183,6 +353,8 @@ class Population:
                 self.teams[new_team.team_id] = new_team
                 active_teams[new_team.team_id] = new_team
                 self.total_agents_created += len(new_team.agents)
+                
+                print(f"✅ Created team {new_team.team_id} with {len(new_team.agents)} agents")
     
     def _clone_team(self, source_team: Team) -> Team:
         """
@@ -410,3 +582,52 @@ class Population:
                         mutation_rate=self.config.MUTATION_RATE * 3.0,
                         mutation_strength=self.config.MUTATION_STRENGTH * 2.0
                     )
+    
+    def _final_diversity_check(self):
+        """
+        Final safety check to ensure we never end up with just 2 teams
+        This is the last line of defense against two-team scenarios
+        """
+        active_teams = self.get_active_teams()
+        
+        print(f"🔍 Final diversity check: {len(active_teams)} active teams")
+        
+        if len(active_teams) == 2:
+            print(f"⚠️  WARNING: Only 2 teams remain after all processing!")
+            
+            # Get the two teams and their sizes
+            team_list = list(active_teams.values())
+            team1, team2 = team_list[0], team_list[1]
+            
+            print(f"    Team {team1.team_id}: {len(team1.agents)} agents")
+            print(f"    Team {team2.team_id}: {len(team2.agents)} agents")
+            
+            # Find the larger team
+            larger_team = team1 if len(team1.agents) > len(team2.agents) else team2
+            
+            # Split the larger team if possible
+            if len(larger_team.agents) >= 4:
+                print(f"🔄 Final diversity preservation: Splitting team {larger_team.team_id}")
+                
+                new_team = larger_team.split_team(self._get_next_team_id())
+                if new_team is not None:
+                    self.teams[new_team.team_id] = new_team
+                    self.total_agents_created += len(new_team.agents)
+                    
+                    print(f"✅ Emergency split: Team {larger_team.team_id} → teams "
+                          f"{larger_team.team_id} ({len(larger_team.agents)}) and "
+                          f"{new_team.team_id} ({len(new_team.agents)})")
+            else:
+                # If we can't split, create a new team by cloning
+                print(f"🆕 Cannot split teams, creating new team by cloning")
+                best_team = max(active_teams.values(), 
+                              key=lambda t: t.performance.average_survival_rate)
+                
+                new_team = self._clone_team(best_team)
+                self.teams[new_team.team_id] = new_team
+                self.total_agents_created += len(new_team.agents)
+                
+                print(f"✅ Emergency clone: Created team {new_team.team_id} with {len(new_team.agents)} agents")
+        
+        final_count = len(self.get_active_teams())
+        print(f"🏁 Final team count: {final_count}")
