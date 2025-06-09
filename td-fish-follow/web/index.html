@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TD Fish Follow - Live Training</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🐠 TD Fish Follow</h1>
+            <p>Watch the fish learn to follow the target using Temporal Difference learning!</p>
+        </div>
+        
+        <div class="main-content">
+            <div class="simulation-panel">
+                <div id="tank">
+                    <div class="fish" id="fish"></div>
+                    <div class="target" id="target"></div>
+                </div>
+                
+                <div class="stats">
+                    <div class="stat-item">
+                        <span class="stat-label">Episode:</span>
+                        <span class="stat-value" id="episode">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Step:</span>
+                        <span class="stat-value" id="step">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Distance:</span>
+                        <span class="stat-value" id="distance">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Reward:</span>
+                        <span class="stat-value" id="reward">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">TD Error:</span>
+                        <span class="stat-value" id="td-error">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Action:</span>
+                        <span class="stat-value" id="action">[0, 0]</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="controls-panel">
+                <div class="control-group">
+                    <h3>🎯 Target Pattern</h3>
+                    <select id="pattern">
+                        <option value="random_walk">Random Walk</option>
+                        <option value="circular">Circular</option>
+                        <option value="figure8">Figure-8</option>
+                        <option value="zigzag">Zigzag</option>
+                        <option value="spiral">Spiral</option>
+                    </select>
+                </div>
+                
+                <div class="control-group">
+                    <h3>🧠 TD Method</h3>
+                    <select id="td-method">
+                        <option value="td_lambda">TD(λ)</option>
+                        <option value="td_0">TD(0)</option>
+                        <option value="n_step_td">N-Step TD</option>
+                    </select>
+                </div>
+                
+                <div class="control-group">
+                    <h3>🎮 Controls</h3>
+                    <button id="start-training">Start Training</button>
+                    <button id="stop-training" disabled>Stop Training</button>
+                    <button id="reset">Reset</button>
+                    <button id="manual-step">Manual Step</button>
+                </div>
+                
+                <div id="status" class="status stopped">
+                    Ready to start training
+                </div>
+                
+                <div class="stats">
+                    <h3>📊 Training Progress</h3>
+                    <div class="stat-item">
+                        <span class="stat-label">Avg Reward (last 10):</span>
+                        <span class="stat-value" id="avg-reward">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Avg Distance (last 10):</span>
+                        <span class="stat-value" id="avg-distance">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Best Distance:</span>
+                        <span class="stat-value" id="best-distance">∞</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Learning Rate:</span>
+                        <span class="stat-value" id="learning-rate">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="charts">
+            <div class="chart">
+                <h3>📈 Episode Rewards</h3>
+                <canvas id="reward-chart" width="400" height="150"></canvas>
+            </div>
+            <div class="chart">
+                <h3>🎯 Distance to Target</h3>
+                <canvas id="distance-chart" width="400" height="150"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <script src="/static/script.js"></script>
+</body>
+</html>
