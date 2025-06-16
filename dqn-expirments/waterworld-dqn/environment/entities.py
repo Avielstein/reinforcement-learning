@@ -46,6 +46,41 @@ class Item:
         self.radius = radius
         self.reward = reward
         self.active = True
+        
+        # Movement properties
+        self.vx = random.uniform(-1, 1)  # Velocity x
+        self.vy = random.uniform(-1, 1)  # Velocity y
+        self.speed = random.uniform(0.5, 1.5)  # Movement speed
+        self.direction_change_timer = 0
+        self.direction_change_interval = random.randint(60, 180)  # Change direction every 1-3 seconds at 60fps
+    
+    def update(self, world_width: float, world_height: float):
+        """Update item position and movement."""
+        if not self.active:
+            return
+            
+        # Update direction change timer
+        self.direction_change_timer += 1
+        
+        # Randomly change direction
+        if self.direction_change_timer >= self.direction_change_interval:
+            self.vx = random.uniform(-1, 1)
+            self.vy = random.uniform(-1, 1)
+            self.direction_change_timer = 0
+            self.direction_change_interval = random.randint(60, 180)
+        
+        # Move item
+        self.x += self.vx * self.speed
+        self.y += self.vy * self.speed
+        
+        # Bounce off walls
+        if self.x <= self.radius or self.x >= world_width - self.radius:
+            self.vx = -self.vx
+            self.x = max(self.radius, min(world_width - self.radius, self.x))
+            
+        if self.y <= self.radius or self.y >= world_height - self.radius:
+            self.vy = -self.vy
+            self.y = max(self.radius, min(world_height - self.radius, self.y))
     
     def get_position(self) -> Tuple[float, float]:
         """Get item position."""
@@ -63,6 +98,12 @@ class Item:
         self.x = x
         self.y = y
         self.active = True
+        # Reset movement properties
+        self.vx = random.uniform(-1, 1)
+        self.vy = random.uniform(-1, 1)
+        self.speed = random.uniform(0.5, 1.5)
+        self.direction_change_timer = 0
+        self.direction_change_interval = random.randint(60, 180)
 
 
 class GoodItem(Item):

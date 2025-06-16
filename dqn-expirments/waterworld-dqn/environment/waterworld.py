@@ -68,6 +68,10 @@ class WaterWorld:
     
     def step(self, action: Tuple[float, float]) -> Tuple[np.ndarray, float, bool, Dict[str, Any]]:
         """Execute one environment step."""
+        # Update moving items
+        for item in self.good_items + self.bad_items:
+            item.update(self.config.WORLD_WIDTH, self.config.WORLD_HEIGHT)
+        
         # Normalize and apply action
         dx, dy = self.physics.normalize_action(action)
         self.agent.move(dx, dy, self.config.WORLD_WIDTH, self.config.WORLD_HEIGHT)
