@@ -77,7 +77,7 @@ def main():
         from agent.double_dqn import DoubleDQN
         
         state_dim = trainer.env.get_observation_dim()
-        action_dim = 8
+        action_dim = trainer.agent.action_dim  # Use the trainer's action dimension (25)
         
         device = None
         if args.device != 'auto':

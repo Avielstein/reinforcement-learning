@@ -28,6 +28,7 @@ class DoubleDQN:
         hidden_dims: list = [128, 128],
         use_dueling: bool = False,
         use_prioritized_replay: bool = False,
+        use_continuous_actions: bool = False,
         device: str = None
     ):
         """
@@ -60,6 +61,7 @@ class DoubleDQN:
         self.target_update_freq = target_update_freq
         self.batch_size = batch_size
         self.use_prioritized_replay = use_prioritized_replay
+        self.use_continuous_actions = use_continuous_actions
         
         # Device setup
         if device is None:
@@ -99,7 +101,7 @@ class DoubleDQN:
             training: Whether in training mode (affects epsilon)
             
         Returns:
-            Selected action
+            Selected action index
         """
         if training and np.random.random() < self.epsilon:
             return np.random.randint(0, self.action_dim)

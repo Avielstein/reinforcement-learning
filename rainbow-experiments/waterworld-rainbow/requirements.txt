@@ -1,0 +1,14 @@
+# Core dependencies
+numpy>=1.21.0
+flask>=2.0.0
+flask-socketio>=5.0.0
+python-socketio>=5.0.0
+
+# Deep Learning
+torch>=1.9.0
+matplotlib>=3.5.0
+
+# Development dependencies
+# pytest>=6.0.0
+# black>=21.0.0
+# flake8>=3.9.0

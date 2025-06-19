@@ -50,9 +50,9 @@ class DQNTrainer:
         # Initialize environment
         self.env = WaterWorld(self.env_config)
         
-        # Initialize agent
+        # Initialize agent with expanded discrete action space
         state_dim = self.env.get_observation_dim()
-        action_dim = 8  # 8 directional actions
+        action_dim = 25  # 5x5 grid of movement directions for fine control
         
         self.agent = DoubleDQN(
             state_dim=state_dim,
@@ -74,17 +74,11 @@ class DQNTrainer:
         self.training_losses = []
         self.eval_rewards = []
         
-        # Action mapping (8 directions)
-        self.action_map = [
-            (0, 1),    # North
-            (1, 1),    # Northeast
-            (1, 0),    # East
-            (1, -1),   # Southeast
-            (0, -1),   # South
-            (-1, -1),  # Southwest
-            (-1, 0),   # West
-            (-1, 1)    # Northwest
-        ]
+        # Create fine-grained action mapping (5x5 grid)
+        self.action_map = []
+        for dx in [-1.0, -0.5, 0.0, 0.5, 1.0]:
+            for dy in [-1.0, -0.5, 0.0, 0.5, 1.0]:
+                self.action_map.append((dx, dy))
     
     def action_to_movement(self, action: int) -> tuple:
         """Convert discrete action to movement direction."""

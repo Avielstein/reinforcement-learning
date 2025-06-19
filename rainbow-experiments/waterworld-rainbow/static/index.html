@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WaterWorld RAINBOW DQN - Research Interface</title>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <style>
+        /* Research-grade styling - clean and academic */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #ffffff;
+            color: #333333;
+            line-height: 1.4;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 500px 1fr;
+            grid-template-rows: 50px 1fr;
+            height: 100vh;
+            gap: 1px;
+            background: #cccccc;
+        }
+
+        .header {
+            grid-column: 1 / -1;
+            background: #f8f8f8;
+            border-bottom: 1px solid #cccccc;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+        }
+
+        .header h1 {
+            font-size: 18px;
+            font-weight: normal;
+            color: #333;
+        }
+
+        .status {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .status.connected {
+            color: #008000;
+        }
+
+        .main-area {
+            background: #ffffff;
+            padding: 10px;
+            position: relative;
+        }
+
+        .sidebar {
+            background: #f8f8f8;
+            padding: 15px;
+            overflow-y: auto;
+            border-left: 1px solid #cccccc;
+        }
+
+        #waterworld-canvas {
+            border: 1px solid #333333;
+            background: #ffffff;
+            display: block;
+        }
+
+        .section {
+            margin-bottom: 20px;
+            border-bottom: 1px solid #dddddd;
+            padding-bottom: 15px;
+        }
+
+        .section:last-child {
+            border-bottom: none;
+        }
+
+        .section h3 {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #333;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .btn {
+            padding: 6px 12px;
+            border: 1px solid #999;
+            background: #f0f0f0;
+            color: #333;
+            font-size: 12px;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        .btn:hover {
+            background: #e0e0e0;
+        }
+
+        .btn:disabled {
+            background: #f8f8f8;
+            color: #999;
+            cursor: not-allowed;
+        }
+
+        .btn.primary {
+            background: #4a90e2;
+            color: white;
+            border-color: #357abd;
+        }
+
+        .btn.primary:hover {
+            background: #357abd;
+        }
+
+        .metric-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-size: 12px;
+        }
+
+        .metric-label {
+            color: #666;
+        }
+
+        .metric-value {
+            font-weight: bold;
+            color: #333;
+        }
+
+        .parameter-control {
+            margin-bottom: 12px;
+        }
+
+        .parameter-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 4px;
+            font-size: 11px;
+        }
+
+        .parameter-name {
+            color: #333;
+            font-weight: bold;
+        }
+
+        .parameter-value {
+            color: #666;
+        }
+
+        .slider {
+            width: 100%;
+            height: 4px;
+            background: #ddd;
+            outline: none;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 12px;
+            height: 12px;
+            background: #4a90e2;
+            cursor: pointer;
+        }
+
+        .slider::-moz-range-thumb {
+            width: 12px;
+            height: 12px;
+            background: #4a90e2;
+            cursor: pointer;
+            border: none;
+        }
+
+        .info-panel {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid #ccc;
+            padding: 8px;
+            font-size: 11px;
+            line-height: 1.3;
+        }
+
+        .chart-placeholder {
+            height: 100px;
+            background: #f8f8f8;
+            border: 1px solid #ddd;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            color: #999;
+            margin-top: 8px;
+        }
+
+        .sensor-info {
+            font-size: 10px;
+            color: #666;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>WaterWorld RAINBOW DQN Research Interface</h1>
+            <div class="status" id="connectionStatus">Connecting...</div>
+        </div>
+
+        <div class="main-area">
+            <canvas id="waterworld-canvas" width="500" height="500"></canvas>
+            <div class="info-panel">
+                <div>Episode: <span id="episode">0</span></div>
+                <div>Step: <span id="step">0</span></div>
+                <div>Reward: <span id="reward">0.0</span></div>
+                <div>Epsilon: <span id="epsilon">1.0</span></div>
+            </div>
+        </div>
+
+        <div class="sidebar">
+            <div class="section">
+                <h3>Training Control</h3>
+                <div class="controls">
+                    <button class="btn primary" id="startBtn">Start</button>
+                    <button class="btn" id="pauseBtn" disabled>Pause</button>
+                    <button class="btn" id="resetBtn">Reset</button>
+                    <button class="btn" id="saveBtn" disabled>Save</button>
+                </div>
+            </div>
+
+            <div class="section">
+                <h3>Model Management</h3>
+                <div class="controls">
+                    <button class="btn" id="loadModelBtn">Load Model</button>
+                    <button class="btn" id="refreshModelsBtn">Refresh</button>
+                </div>
+                <div id="modelSelector" style="margin-top: 10px; display: none;">
+                    <select id="modelDropdown" style="width: 100%; margin-bottom: 8px; padding: 4px;">
+                        <option value="">Select a model...</option>
+                    </select>
+                    <div class="controls">
+                        <button class="btn primary" id="confirmLoadBtn">Load Selected</button>
+                        <button class="btn" id="cancelLoadBtn">Cancel</button>
+                    </div>
+                </div>
+                <div id="modelInfo" style="font-size: 11px; color: #666; margin-top: 8px;"></div>
+            </div>
+
+            <div class="section">
+                <h3>Training Mode</h3>
+                <div style="margin-bottom: 10px;">
+                    <label style="display: flex; align-items: center; font-size: 12px;">
+                        <input type="checkbox" id="realDqnToggle" style="margin-right: 8px;">
+                        Use Real DQN Training
+                    </label>
+                </div>
+                <div id="trainingModeInfo" style="font-size: 11px; color: #666;">
+                    Currently using mock training simulation
+                </div>
+            </div>
+
+            <div class="section">
+                <h3>Performance Metrics</h3>
+                <div class="metric-row">
+                    <span class="metric-label">Episode</span>
+                    <span class="metric-value" id="sidebarEpisode">0</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Total Steps</span>
+                    <span class="metric-value" id="totalSteps">0</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Avg Reward</span>
+                    <span class="metric-value" id="avgReward">0.0</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Current Loss</span>
+                    <span class="metric-value" id="currentLoss">0.0</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Target Update</span>
+                    <span class="metric-value" id="targetUpdate">0</span>
+                </div>
+            </div>
+
+            <div class="section">
+                <h3>Algorithm Parameters</h3>
+                
+                <div class="parameter-control">
+                    <div class="parameter-label">
+                        <span class="parameter-name">learning_rate</span>
+                        <span class="parameter-value" id="learningRateValue">0.001</span>
+                    </div>
+                    <input type="range" class="slider" id="learningRateSlider" 
+                           min="0.0001" max="0.01" step="0.0001" value="0.001">
+                </div>
+
+                <div class="parameter-control">
+                    <div class="parameter-label">
+                        <span class="parameter-name">epsilon_decay</span>
+                        <span class="parameter-value" id="epsilonDecayValue">0.995</span>
+                    </div>
+                    <input type="range" class="slider" id="epsilonDecaySlider" 
+                           min="0.99" max="0.9999" step="0.0001" value="0.995">
+                </div>
+
+                <div class="parameter-control">
+                    <div class="parameter-label">
+                        <span class="parameter-name">target_update_freq</span>
+                        <span class="parameter-value" id="targetUpdateValue">100</span>
+                    </div>
+                    <input type="range" class="slider" id="targetUpdateSlider" 
+                           min="10" max="1000" step="10" value="100">
+                </div>
+
+                <div class="parameter-control">
+                    <div class="parameter-label">
+                        <span class="parameter-name">batch_size</span>
+                        <span class="parameter-value" id="batchSizeValue">32</span>
+                    </div>
+                    <input type="range" class="slider" id="batchSizeSlider" 
+                           min="16" max="128" step="16" value="32">
+                </div>
+
+                <div class="parameter-control">
+                    <div class="parameter-label">
+                        <span class="parameter-name">gamma</span>
+                        <span class="parameter-value" id="gammaValue">0.99</span>
+                    </div>
+                    <input type="range" class="slider" id="gammaSlider" 
+                           min="0.9" max="0.999" step="0.001" value="0.99">
+                </div>
+            </div>
+
+            <div class="section">
+                <h3>Environment Info</h3>
+                <div class="sensor-info">
+                    Agent uses 30 raycast sensors for perception.<br>
+                    Green items: +1 reward<br>
+                    Red items: -1 reward<br>
+                    Sensors detect distance and object type.
+                </div>
+            </div>
+
+            <div class="section">
+                <h3>Learning Progress</h3>
+                <div class="chart-placeholder">
+                    Reward Chart
+                </div>
+                <div class="chart-placeholder">
+                    Loss Chart
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global state
+        let socket = null;
+        let isTraining = false;
+        let canvas = null;
+        let ctx = null;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            canvas = document.getElementById('waterworld-canvas');
+            ctx = canvas.getContext('2d');
+            
+            setupControls();
+            connectWebSocket();
+            startRenderLoop();
+        });
+
+        function setupControls() {
+            // Control buttons
+            document.getElementById('startBtn').addEventListener('click', startTraining);
+            document.getElementById('pauseBtn').addEventListener('click', pauseTraining);
+            document.getElementById('resetBtn').addEventListener('click', resetTraining);
+            document.getElementById('saveBtn').addEventListener('click', saveModel);
+
+            // Model management buttons
+            document.getElementById('loadModelBtn').addEventListener('click', showModelSelector);
+            document.getElementById('refreshModelsBtn').addEventListener('click', refreshModels);
+            document.getElementById('confirmLoadBtn').addEventListener('click', loadSelectedModel);
+            document.getElementById('cancelLoadBtn').addEventListener('click', hideModelSelector);
+
+            // Training mode toggle
+            document.getElementById('realDqnToggle').addEventListener('change', toggleTrainingMode);
+
+            // Parameter sliders
+            const sliders = [
+                { id: 'learningRateSlider', valueId: 'learningRateValue', param: 'learning_rate' },
+                { id: 'epsilonDecaySlider', valueId: 'epsilonDecayValue', param: 'epsilon_decay' },
+                { id: 'targetUpdateSlider', valueId: 'targetUpdateValue', param: 'target_update_freq' },
+                { id: 'batchSizeSlider', valueId: 'batchSizeValue', param: 'batch_size' },
+                { id: 'gammaSlider', valueId: 'gammaValue', param: 'gamma' }
+            ];
+
+            sliders.forEach(({ id, valueId, param }) => {
+                const slider = document.getElementById(id);
+                const valueDisplay = document.getElementById(valueId);
+
+                slider.addEventListener('input', (e) => {
+                    const value = parseFloat(e.target.value);
+                    valueDisplay.textContent = value;
+                    
+                    if (socket && socket.connected) {
+                        socket.emit('parameter_update', {
+                            parameter: param,
+                            value: value
+                        });
+                    }
+                });
+            });
+        }
+
+        function connectWebSocket() {
+            socket = io();
+            
+            socket.on('connect', () => {
+                updateConnectionStatus(true);
+                console.log('Connected to WaterWorld server');
+            });
+
+            socket.on('training_update', (data) => {
+                updateMetrics(data);
+                renderEnvironment(data.environment);
+            });
+
+            socket.on('training_status', (data) => {
+                updateTrainingStatus(data.status);
+            });
+
+            socket.on('parameter_confirmation', (data) => {
+                console.log('Parameter updated:', data.parameter, '=', data.value);
+            });
+
+            socket.on('model_saved', (data) => {
+                console.log('Model saved:', data.filename);
+            });
+
+            socket.on('disconnect', () => {
+                updateConnectionStatus(false);
+                console.log('Disconnected from server');
+            });
+
+            // Setup model management handlers
+            setupModelManagementHandlers();
+        }
+
+        function updateConnectionStatus(connected) {
+            const status = document.getElementById('connectionStatus');
+            status.textContent = connected ? 'Connected' : 'Disconnected';
+            status.className = connected ? 'status connected' : 'status';
+        }
+
+        function updateMetrics(data) {
+            document.getElementById('episode').textContent = data.episode || 0;
+            document.getElementById('sidebarEpisode').textContent = data.episode || 0;
+            document.getElementById('step').textContent = data.episode_steps || 0;
+            document.getElementById('totalSteps').textContent = data.total_steps || 0;
+            document.getElementById('reward').textContent = (data.episode_reward || 0).toFixed(2);
+            document.getElementById('avgReward').textContent = (data.avg_reward || 0).toFixed(2);
+            document.getElementById('epsilon').textContent = (data.epsilon || 0).toFixed(3);
+            document.getElementById('currentLoss').textContent = (data.loss || 0).toFixed(4);
+            document.getElementById('targetUpdate').textContent = data.steps_since_target_update || 0;
+        }
+
+        function updateTrainingStatus(status) {
+            const startBtn = document.getElementById('startBtn');
+            const pauseBtn = document.getElementById('pauseBtn');
+            const saveBtn = document.getElementById('saveBtn');
+
+            if (status === 'training') {
+                isTraining = true;
+                startBtn.disabled = true;
+                pauseBtn.disabled = false;
+                saveBtn.disabled = false;
+            } else {
+                isTraining = false;
+                startBtn.disabled = false;
+                pauseBtn.disabled = true;
+                if (status === 'reset') {
+                    saveBtn.disabled = true;
+                }
+            }
+        }
+
+        function startTraining() {
+            if (socket && socket.connected) {
+                socket.emit('start_training');
+            }
+        }
+
+        function pauseTraining() {
+            if (socket && socket.connected) {
+                socket.emit('pause_training');
+            }
+        }
+
+        function resetTraining() {
+            if (socket && socket.connected) {
+                socket.emit('reset_training');
+            }
+        }
+
+        function saveModel() {
+            if (socket && socket.connected) {
+                socket.emit('save_model');
+            }
+        }
+
+        function renderEnvironment(envData) {
+            if (!envData) return;
+
+            // Clear canvas
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw sensor rays first (background)
+            if (envData.sensor_readings) {
+                drawSensorRays(envData.agent, envData.sensor_readings);
+            }
+
+            // Draw items
+            if (envData.good_items) {
+                envData.good_items.forEach(item => {
+                    if (item.active) {
+                        drawItem(item.x, item.y, item.radius, '#00AA00');
+                    }
+                });
+            }
+
+            if (envData.bad_items) {
+                envData.bad_items.forEach(item => {
+                    if (item.active) {
+                        drawItem(item.x, item.y, item.radius, '#AA0000');
+                    }
+                });
+            }
+
+            // Draw agent
+            if (envData.agent) {
+                drawAgent(envData.agent);
+            }
+        }
+
+        function drawAgent(agent) {
+            ctx.save();
+            ctx.translate(agent.x, agent.y);
+            ctx.rotate(agent.angle);
+
+            // Agent body (black circle)
+            ctx.beginPath();
+            ctx.arc(0, 0, agent.radius, 0, 2 * Math.PI);
+            ctx.fillStyle = '#000000';
+            ctx.fill();
+            ctx.strokeStyle = '#333333';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+
+            // Direction indicator
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(agent.radius + 3, 0);
+            ctx.strokeStyle = '#000000';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            ctx.restore();
+        }
+
+        function drawItem(x, y, radius, color) {
+            ctx.beginPath();
+            ctx.arc(x, y, radius, 0, 2 * Math.PI);
+            ctx.fillStyle = color;
+            ctx.fill();
+            ctx.strokeStyle = '#333333';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+        }
+
+        function drawSensorRays(agent, sensorReadings) {
+            if (!agent || !sensorReadings) return;
+
+            sensorReadings.forEach(reading => {
+                if (reading.hit_position) {
+                    ctx.beginPath();
+                    ctx.moveTo(agent.x, agent.y);
+                    ctx.lineTo(reading.hit_position[0], reading.hit_position[1]);
+                    
+                    // Color based on what was detected
+                    if (reading.type === 'good') {
+                        ctx.strokeStyle = '#00AA0040';
+                    } else if (reading.type === 'bad') {
+                        ctx.strokeStyle = '#AA000040';
+                    } else {
+                        ctx.strokeStyle = '#CCCCCC40';
+                    }
+                    
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                }
+            });
+        }
+
+        // Model management functions
+        function showModelSelector() {
+            refreshModels();
+            document.getElementById('modelSelector').style.display = 'block';
+        }
+
+        function hideModelSelector() {
+            document.getElementById('modelSelector').style.display = 'none';
+            document.getElementById('modelInfo').textContent = '';
+        }
+
+        function refreshModels() {
+            if (socket && socket.connected) {
+                socket.emit('get_available_models');
+            }
+        }
+
+        function loadSelectedModel() {
+            const dropdown = document.getElementById('modelDropdown');
+            const selectedPath = dropdown.value;
+            
+            if (!selectedPath) {
+                alert('Please select a model to load');
+                return;
+            }
+
+            if (socket && socket.connected) {
+                socket.emit('load_model', { model_path: selectedPath });
+            }
+        }
+
+        function toggleTrainingMode() {
+            const toggle = document.getElementById('realDqnToggle');
+            const useRealDqn = toggle.checked;
+            
+            if (socket && socket.connected) {
+                socket.emit('toggle_real_training', { use_real_dqn: useRealDqn });
+            }
+        }
+
+        // Add WebSocket event handlers for model management
+        function setupModelManagementHandlers() {
+            socket.on('available_models', (data) => {
+                updateModelDropdown(data.models);
+            });
+
+            socket.on('model_loaded', (data) => {
+                if (data.success) {
+                    document.getElementById('modelInfo').textContent = `✅ ${data.message}`;
+                    hideModelSelector();
+                    
+                    // Enable real DQN mode
+                    document.getElementById('realDqnToggle').checked = true;
+                    document.getElementById('trainingModeInfo').textContent = 'Using real DQN with loaded model';
+                } else {
+                    document.getElementById('modelInfo').textContent = `❌ ${data.message}`;
+                }
+            });
+
+            socket.on('training_mode_changed', (data) => {
+                const info = document.getElementById('trainingModeInfo');
+                if (data.use_real_dqn) {
+                    info.textContent = 'Using real DQN training';
+                } else {
+                    info.textContent = 'Using mock training simulation';
+                }
+                console.log(data.message);
+            });
+        }
+
+        function updateModelDropdown(models) {
+            const dropdown = document.getElementById('modelDropdown');
+            dropdown.innerHTML = '<option value="">Select a model...</option>';
+            
+            models.forEach(model => {
+                const option = document.createElement('option');
+                option.value = model.path;
+                option.textContent = `${model.filename} (${model.size_mb}MB, ${model.modified})`;
+                dropdown.appendChild(option);
+            });
+
+            // Update model info
+            const modelInfo = document.getElementById('modelInfo');
+            if (models.length > 0) {
+                modelInfo.textContent = `Found ${models.length} available models`;
+            } else {
+                modelInfo.textContent = 'No trained models found';
+            }
+        }
+
+        function startRenderLoop() {
+            function render() {
+                // Rendering is handled by training updates
+                requestAnimationFrame(render);
+            }
+            render();
+        }
+    </script>
+</body>
+</html>
