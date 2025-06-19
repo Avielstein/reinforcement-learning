@@ -139,6 +139,10 @@ class DQNTrainer:
                     if train_metrics:
                         self.training_losses.append(train_metrics['loss'])
                 
+                # Decay epsilon every step (not just during training)
+                if self.agent.epsilon > self.agent.epsilon_end:
+                    self.agent.epsilon *= self.agent.epsilon_decay
+                
                 # Update state
                 state = next_state
                 episode_reward += reward

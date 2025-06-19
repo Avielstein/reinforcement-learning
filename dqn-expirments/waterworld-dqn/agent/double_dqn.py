@@ -170,10 +170,6 @@ class DoubleDQN:
         if self.steps % self.target_update_freq == 0:
             self.target_network.load_state_dict(self.q_network.state_dict())
         
-        # Decay epsilon
-        if self.epsilon > self.epsilon_end:
-            self.epsilon *= self.epsilon_decay
-        
         # Store loss
         self.losses.append(loss.item())
         

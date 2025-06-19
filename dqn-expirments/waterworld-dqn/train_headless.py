@@ -21,7 +21,7 @@ def main():
     parser.add_argument('--save-dir', type=str, default='models', help='Directory to save models')
     parser.add_argument('--log-interval', type=int, default=100, help='Logging interval')
     parser.add_argument('--eval-interval', type=int, default=500, help='Evaluation interval')
-    parser.add_argument('--warmup', type=int, default=100, help='Warmup episodes before training')
+    parser.add_argument('--warmup', type=int, default=32, help='Warmup episodes before training')
     parser.add_argument('--lr', type=float, default=0.001, help='Learning rate')
     parser.add_argument('--gamma', type=float, default=0.99, help='Discount factor')
     parser.add_argument('--epsilon-decay', type=float, default=0.995, help='Epsilon decay rate')

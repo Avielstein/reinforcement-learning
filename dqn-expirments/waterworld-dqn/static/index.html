@@ -250,6 +250,37 @@
             </div>
 
             <div class="section">
+                <h3>Model Management</h3>
+                <div class="controls">
+                    <button class="btn" id="loadModelBtn">Load Model</button>
+                    <button class="btn" id="refreshModelsBtn">Refresh</button>
+                </div>
+                <div id="modelSelector" style="margin-top: 10px; display: none;">
+                    <select id="modelDropdown" style="width: 100%; margin-bottom: 8px; padding: 4px;">
+                        <option value="">Select a model...</option>
+                    </select>
+                    <div class="controls">
+                        <button class="btn primary" id="confirmLoadBtn">Load Selected</button>
+                        <button class="btn" id="cancelLoadBtn">Cancel</button>
+                    </div>
+                </div>
+                <div id="modelInfo" style="font-size: 11px; color: #666; margin-top: 8px;"></div>
+            </div>
+
+            <div class="section">
+                <h3>Training Mode</h3>
+                <div style="margin-bottom: 10px;">
+                    <label style="display: flex; align-items: center; font-size: 12px;">
+                        <input type="checkbox" id="realDqnToggle" style="margin-right: 8px;">
+                        Use Real DQN Training
+                    </label>
+                </div>
+                <div id="trainingModeInfo" style="font-size: 11px; color: #666;">
+                    Currently using mock training simulation
+                </div>
+            </div>
+
+            <div class="section">
                 <h3>Performance Metrics</h3>
                 <div class="metric-row">
                     <span class="metric-label">Episode</span>
@@ -368,6 +399,15 @@
             document.getElementById('resetBtn').addEventListener('click', resetTraining);
             document.getElementById('saveBtn').addEventListener('click', saveModel);
 
+            // Model management buttons
+            document.getElementById('loadModelBtn').addEventListener('click', showModelSelector);
+            document.getElementById('refreshModelsBtn').addEventListener('click', refreshModels);
+            document.getElementById('confirmLoadBtn').addEventListener('click', loadSelectedModel);
+            document.getElementById('cancelLoadBtn').addEventListener('click', hideModelSelector);
+
+            // Training mode toggle
+            document.getElementById('realDqnToggle').addEventListener('change', toggleTrainingMode);
+
             // Parameter sliders
             const sliders = [
                 { id: 'learningRateSlider', valueId: 'learningRateValue', param: 'learning_rate' },
@@ -424,6 +464,9 @@
                 updateConnectionStatus(false);
                 console.log('Disconnected from server');
             });
+
+            // Setup model management handlers
+            setupModelManagementHandlers();
         }
 
         function updateConnectionStatus(connected) {
@@ -580,6 +623,96 @@
                     ctx.stroke();
                 }
             });
+        }
+
+        // Model management functions
+        function showModelSelector() {
+            refreshModels();
+            document.getElementById('modelSelector').style.display = 'block';
+        }
+
+        function hideModelSelector() {
+            document.getElementById('modelSelector').style.display = 'none';
+            document.getElementById('modelInfo').textContent = '';
+        }
+
+        function refreshModels() {
+            if (socket && socket.connected) {
+                socket.emit('get_available_models');
+            }
+        }
+
+        function loadSelectedModel() {
+            const dropdown = document.getElementById('modelDropdown');
+            const selectedPath = dropdown.value;
+            
+            if (!selectedPath) {
+                alert('Please select a model to load');
+                return;
+            }
+
+            if (socket && socket.connected) {
+                socket.emit('load_model', { model_path: selectedPath });
+            }
+        }
+
+        function toggleTrainingMode() {
+            const toggle = document.getElementById('realDqnToggle');
+            const useRealDqn = toggle.checked;
+            
+            if (socket && socket.connected) {
+                socket.emit('toggle_real_training', { use_real_dqn: useRealDqn });
+            }
+        }
+
+        // Add WebSocket event handlers for model management
+        function setupModelManagementHandlers() {
+            socket.on('available_models', (data) => {
+                updateModelDropdown(data.models);
+            });
+
+            socket.on('model_loaded', (data) => {
+                if (data.success) {
+                    document.getElementById('modelInfo').textContent = `✅ ${data.message}`;
+                    hideModelSelector();
+                    
+                    // Enable real DQN mode
+                    document.getElementById('realDqnToggle').checked = true;
+                    document.getElementById('trainingModeInfo').textContent = 'Using real DQN with loaded model';
+                } else {
+                    document.getElementById('modelInfo').textContent = `❌ ${data.message}`;
+                }
+            });
+
+            socket.on('training_mode_changed', (data) => {
+                const info = document.getElementById('trainingModeInfo');
+                if (data.use_real_dqn) {
+                    info.textContent = 'Using real DQN training';
+                } else {
+                    info.textContent = 'Using mock training simulation';
+                }
+                console.log(data.message);
+            });
+        }
+
+        function updateModelDropdown(models) {
+            const dropdown = document.getElementById('modelDropdown');
+            dropdown.innerHTML = '<option value="">Select a model...</option>';
+            
+            models.forEach(model => {
+                const option = document.createElement('option');
+                option.value = model.path;
+                option.textContent = `${model.filename} (${model.size_mb}MB, ${model.modified})`;
+                dropdown.appendChild(option);
+            });
+
+            // Update model info
+            const modelInfo = document.getElementById('modelInfo');
+            if (models.length > 0) {
+                modelInfo.textContent = `Found ${models.length} available models`;
+            } else {
+                modelInfo.textContent = 'No trained models found';
+            }
         }
 
         function startRenderLoop() {

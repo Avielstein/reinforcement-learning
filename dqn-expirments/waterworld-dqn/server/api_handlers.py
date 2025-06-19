@@ -75,6 +75,36 @@ def setup_handlers(socketio, data_manager):
     def handle_get_state():
         """Get current training state."""
         emit('training_update', data_manager.get_current_state())
+    
+    @socketio.on('get_available_models')
+    def handle_get_available_models():
+        """Get list of available trained models."""
+        models = data_manager.get_available_models()
+        emit('available_models', {'models': models})
+    
+    @socketio.on('load_model')
+    def handle_load_model(data):
+        """Load a trained model."""
+        model_path = data.get('model_path')
+        if model_path:
+            success, message = data_manager.load_model(model_path)
+            emit('model_loaded', {
+                'success': success,
+                'message': message,
+                'model_path': model_path
+            })
+            if success:
+                emit('training_update', data_manager.get_current_state())
+    
+    @socketio.on('toggle_real_training')
+    def handle_toggle_real_training(data):
+        """Toggle between mock and real DQN training."""
+        use_real_dqn = data.get('use_real_dqn', False)
+        data_manager.set_real_training_mode(use_real_dqn)
+        emit('training_mode_changed', {
+            'use_real_dqn': use_real_dqn,
+            'message': 'Real DQN training enabled' if use_real_dqn else 'Mock training enabled'
+        })
 
 
 def start_training_loop(socketio, data_manager):

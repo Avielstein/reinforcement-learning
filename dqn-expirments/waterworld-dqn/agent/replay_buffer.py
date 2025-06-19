@@ -38,10 +38,11 @@ class ReplayBuffer:
         """
         experiences = random.sample(self.buffer, batch_size)
         
-        states = torch.FloatTensor([e.state for e in experiences])
+        # Efficiently stack numpy arrays before converting to tensors
+        states = torch.FloatTensor(np.stack([e.state for e in experiences]))
         actions = torch.LongTensor([e.action for e in experiences])
         rewards = torch.FloatTensor([e.reward for e in experiences])
-        next_states = torch.FloatTensor([e.next_state for e in experiences])
+        next_states = torch.FloatTensor(np.stack([e.next_state for e in experiences]))
         dones = torch.BoolTensor([e.done for e in experiences])
         
         return states, actions, rewards, next_states, dones
@@ -115,11 +116,11 @@ class PrioritizedReplayBuffer:
         weights = (total * probs[indices]) ** (-beta)
         weights /= weights.max()
         
-        # Convert to tensors
-        states = torch.FloatTensor([e.state for e in experiences])
+        # Convert to tensors efficiently
+        states = torch.FloatTensor(np.stack([e.state for e in experiences]))
         actions = torch.LongTensor([e.action for e in experiences])
         rewards = torch.FloatTensor([e.reward for e in experiences])
-        next_states = torch.FloatTensor([e.next_state for e in experiences])
+        next_states = torch.FloatTensor(np.stack([e.next_state for e in experiences]))
         dones = torch.BoolTensor([e.done for e in experiences])
         weights = torch.FloatTensor(weights)
         
