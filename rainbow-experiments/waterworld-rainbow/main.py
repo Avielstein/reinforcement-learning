@@ -23,12 +23,12 @@ def start_server():
     from server.websocket_server import create_app
     from config.ui_config import UIConfig
     
-    print("🔬 WaterWorld Double DQN Research Interface")
+    print("🌈 WaterWorld RAINBOW DQN Research Interface")
     print("=" * 50)
     print(f"🌐 Open your browser to: http://localhost:{UIConfig.PORT}")
     print("📊 Research-grade RL training visualization")
     print("⚙️  Real-time parameter adjustment")
-    print("🧠 Double DQN algorithm with sensing")
+    print("🌈 RAINBOW DQN algorithm with all 6 components")
     print("⏹️  Press Ctrl+C to stop")
     print("-" * 50)
     

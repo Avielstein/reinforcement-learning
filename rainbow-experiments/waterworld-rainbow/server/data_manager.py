@@ -10,7 +10,7 @@ from collections import deque
 from datetime import datetime
 
 from environment import WaterWorld
-from agent.double_dqn import DoubleDQN
+from agent.rainbow import RainbowDQN
 from config import EnvironmentConfig, AgentConfig
 
 class DataManager:
@@ -100,18 +100,20 @@ class DataManager:
             return self._step_mock_training()
     
     def _step_real_dqn(self) -> Dict[str, Any]:
-        """Execute one step with real DQN agent."""
+        """Execute one step with real RAINBOW agent."""
         # Get current observation
         observation = self.environment._get_observation()
         
-        # Get action from DQN agent
+        # Get action from RAINBOW agent (always returns discrete action index)
         action_idx = self.dqn_agent.get_action(observation, training=True)
+        
+        # Convert discrete action to continuous movement
         movement = self._action_to_movement(action_idx)
         
         # Execute environment step
         next_observation, reward, done, info = self.environment.step(movement)
         
-        # Store experience in DQN agent
+        # Store experience in RAINBOW agent
         self.dqn_agent.store_experience(observation, action_idx, reward, next_observation, done)
         
         # Train the agent
@@ -364,11 +366,11 @@ class DataManager:
             return False, f"Error loading model: {str(e)}"
     
     def _initialize_real_dqn(self):
-        """Initialize real DQN agent."""
+        """Initialize real RAINBOW agent."""
         state_dim = self.environment.get_observation_dim()
-        action_dim = 8  # 8 directional actions
+        action_dim = self.agent_config.ACTION_DIM  # Use config action dimension
         
-        self.dqn_agent = DoubleDQN(
+        self.dqn_agent = RainbowDQN(
             state_dim=state_dim,
             action_dim=action_dim,
             learning_rate=self.learning_rate,
@@ -379,7 +381,12 @@ class DataManager:
             target_update_freq=self.target_update_freq,
             batch_size=self.batch_size,
             buffer_size=self.agent_config.REPLAY_BUFFER_SIZE,
-            hidden_dims=self.agent_config.HIDDEN_LAYERS
+            hidden_dims=self.agent_config.HIDDEN_LAYERS,
+            n_step=self.agent_config.N_STEP,
+            v_min=self.agent_config.V_MIN,
+            v_max=self.agent_config.V_MAX,
+            n_atoms=self.agent_config.N_ATOMS,
+            noisy_std=self.agent_config.NOISY_STD
         )
         
         # Action mapping (8 directions)
@@ -394,7 +401,7 @@ class DataManager:
             (-1, 1)    # Northwest
         ]
         
-        print("🧠 Real DQN agent initialized")
+        print("🌈 Real RAINBOW agent initialized")
     
     def set_real_training_mode(self, use_real_dqn: bool):
         """Toggle between mock and real DQN training."""
@@ -409,6 +416,8 @@ class DataManager:
     def _action_to_movement(self, action: int) -> tuple:
         """Convert discrete action to movement direction."""
         if hasattr(self, 'action_map'):
+            # Ensure action is within bounds
+            action = action % len(self.action_map)
             return self.action_map[action]
         else:
             # Fallback action mapping
@@ -416,4 +425,5 @@ class DataManager:
                 (0, 1), (1, 1), (1, 0), (1, -1),
                 (0, -1), (-1, -1), (-1, 0), (-1, 1)
             ]
+            action = action % len(action_map)
             return action_map[action]
