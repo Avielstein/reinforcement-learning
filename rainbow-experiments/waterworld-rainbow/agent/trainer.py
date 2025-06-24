@@ -184,7 +184,7 @@ class RainbowTrainer:
             
             # Evaluate agent and save best models
             if (episode + 1) % eval_frequency == 0:
-                eval_reward = self.evaluate(num_episodes=5, verbose=False)
+                eval_reward = self.evaluate(num_episodes=20, verbose=False)
                 
                 # Check if this is a new best evaluation performance
                 if not hasattr(self, 'best_eval_reward') or eval_reward > self.best_eval_reward:

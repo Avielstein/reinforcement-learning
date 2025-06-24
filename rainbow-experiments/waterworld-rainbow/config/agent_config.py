@@ -8,7 +8,7 @@ class AgentConfig:
     ACTIVATION = 'relu'
     
     # Training parameters - OPTIMIZED FOR SPEED
-    LEARNING_RATE = 0.001  # Higher learning rate for faster updates
+    LEARNING_RATE = 0.002  # Higher learning rate for faster learning on simple task
     BATCH_SIZE = 64  # Larger batch size for more stable gradients
     GAMMA = 0.99  # Discount factor
     
@@ -34,16 +34,16 @@ class AgentConfig:
     N_ATOMS = 51  # Number of atoms for value distribution
     NOISY_STD = 0.4  # Slightly lower noise for more focused exploration
     
-    # SAMPLE EFFICIENCY OPTIMIZATIONS
-    EARLY_STOPPING_PATIENCE = 50  # Stop if no improvement for N episodes
-    CONVERGENCE_THRESHOLD = 0.1  # Consider converged if improvement < this
-    PERFORMANCE_WINDOW = 20  # Episodes to average for performance tracking
+    # SAMPLE EFFICIENCY OPTIMIZATIONS - IMPROVED FOR RAINBOW
+    EARLY_STOPPING_PATIENCE = 200  # Stop if no improvement for N episodes (increased for RAINBOW complexity)
+    CONVERGENCE_THRESHOLD = 0.05  # Consider converged if improvement < this (more sensitive)
+    PERFORMANCE_WINDOW = 50  # Episodes to average for performance tracking (larger window for stability)
     
     # Observation space
     # Will be set dynamically based on sensor count
     OBSERVATION_DIM = None  # Set by environment
     
     # Action space
-    ACTION_DIM = 2  # [dx, dy] movement direction (continuous)
+    ACTION_DIM = 8  # 8 discrete movement directions (matches trainer mapping)
     ACTION_SCALE = 1.0  # Scale factor for actions
-    USE_CONTINUOUS_ACTIONS = True  # Use continuous action space
+    USE_CONTINUOUS_ACTIONS = False  # Use discrete action space

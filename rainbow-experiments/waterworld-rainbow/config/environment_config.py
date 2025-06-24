@@ -27,8 +27,8 @@ class EnvironmentConfig:
     
     # Episode settings
     MAX_EPISODE_STEPS = 1000
-    TERMINATE_ON_BAD_ITEM = True  # End episode when hitting red item (faster learning)
-    BAD_ITEM_PENALTY = -5.0  # Stronger penalty for hitting red items
+    TERMINATE_ON_BAD_ITEM = False  # Don't end episode when hitting red item (encourage exploration)
+    BAD_ITEM_PENALTY = -1.0  # Same magnitude as good item reward for balanced learning
     
     # Physics
     COLLISION_TOLERANCE = 1.0  # Distance for collision detection
