@@ -1,79 +1,53 @@
-# Tank Simulation Projects
+# Tank Simulation - Continuous Control RL
 
-This directory contains multiple reinforcement learning projects focused on tank/aquarium environments with different objectives and learning scenarios.
+A comprehensive continuous control reinforcement learning environment featuring fish navigation in tank environments with physics simulation. This project demonstrates the transition from discrete to continuous action spaces using Actor-Critic methods.
 
-## Project Structure
+## Overview
 
-### `utils/`
-Shared utility modules used across all tank simulation projects:
-- `constants.py` - Environment and training parameters
-- `environment.py` - Base fish tank environment and water current classes
-- `models.py` - Neural network architectures (Actor-Critic)
-- `trainer.py` - A2C training algorithm implementation
-- `visualization.py` - Training visualization and testing tools
+This project serves as the primary continuous control demonstration in the collection, featuring two main scenarios: fish-to-center navigation and dynamic dot-following. It bridges the gap between discrete action DQN implementations and advanced continuous control, providing a foundation for understanding policy gradient methods and their applications in physics-based environments.
 
-### `fish-to-center/`
-**Objective**: Train a fish agent to navigate to and stay at the center of the tank while dealing with dynamic water currents.
+## Usage
 
-**Features**:
-- A2C (Advantage Actor-Critic) implementation
-- Physics-based fish movement with realistic water dynamics
-- Dynamic water currents that evolve over time
-- Real-time training visualization
-- Interactive web-based simulator
-- Multiple trained models available
-
-**Files**:
-- `train-RL-fish.ipynb` - Main training notebook
-- `fish-tank-rl.html` - Interactive web simulator
-- `*.pt` - Saved model files
-- Various experiment notebooks
-
-### `dot-follow/`
-**Objective**: [To be implemented] Train a fish agent to follow a moving dot/target around the tank.
-
-**Planned Features**:
-- Moving target that the fish must track
-- Different target movement patterns (circular, random, figure-8, etc.)
-- Reward based on proximity to moving target
-- Potential for curriculum learning with increasing target speeds
-
-## Getting Started
-
-### Prerequisites
+### Fish-to-Center Navigation
 ```bash
+cd tank-sim/fish-to-center
 pip install torch gymnasium matplotlib numpy jupyter
-```
 
-### Running Projects
-
-#### Fish-to-Center
-```bash
-cd fish-to-center
+# Jupyter notebook training
 jupyter notebook train-RL-fish.ipynb
-# Or open fish-tank-rl.html in browser for web demo
+
+# Web demo
+open fish-tank-rl.html
 ```
 
-#### Dot-Follow
+### Dot Following
 ```bash
-cd dot-follow
-# [Implementation coming soon]
+cd tank-sim/dot-follow
+pip install torch gymnasium matplotlib numpy
+
+# Basic training
+python train_model.py
+
+# Web interface
+python start_web_interface.py
+# Open http://localhost:5000
+
+# Interactive visualization
+python dot_follow_visualization.py
 ```
 
-## Shared Utilities
+## Requirements
 
-All projects use the shared `utils/` package. To use in your notebooks:
+- Python 3.8+
+- PyTorch
+- Gymnasium
+- NumPy
+- Matplotlib
+- Jupyter (for notebooks)
+- Flask (for web interfaces)
 
-```python
-import sys
-sys.path.append('../')  # Add parent directory to path
-from utils import FishTankEnv, A2CLearner, run_training_visualization
-```
+## References
 
-## Contributing
-
-When adding new tank simulation projects:
-1. Create a new subdirectory under `tank-sim/`
-2. Use the shared `utils/` package when possible
-3. Add project-specific documentation
-4. Update this README with the new project description
+- Schulman, J., et al. (2017). Proximal policy optimization algorithms. arXiv preprint.
+- Mnih, V., et al. (2016). Asynchronous methods for deep reinforcement learning. ICML.
+- Lillicrap, T. P., et al. (2016). Continuous control with deep reinforcement learning. ICLR.
