@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PPO + Curiosity Fish: Interactive Waterworld RL</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .header h1 {
+            color: #2c3e50;
+            margin: 0;
+            font-size: 28px;
+        }
+        
+        .header p {
+            color: #7f8c8d;
+            margin: 5px 0;
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 300px 1fr 300px;
+            gap: 20px;
+            align-items: start;
+        }
+        
+        .left-panel, .right-panel {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+        }
+        
+        .simulation-area {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            text-align: center;
+        }
+        
+        /* Parameter Box (Karpathy style) */
+        .param-box {
+            margin-bottom: 20px;
+        }
+        
+        .param-box h3 {
+            margin: 0 0 10px 0;
+            color: #2c3e50;
+            font-size: 16px;
+        }
+        
+        .param-textarea {
+            width: 100%;
+            height: 200px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            border: 1px solid #ddd;
+            padding: 10px;
+            resize: vertical;
+            background-color: #f8f9fa;
+        }
+        
+        .update-btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+        
+        .update-btn:hover {
+            background: #2980b9;
+        }
+        
+        /* Control Buttons */
+        .controls {
+            margin-bottom: 20px;
+        }
+        
+        .control-group {
+            margin-bottom: 15px;
+        }
+        
+        .control-group h4 {
+            margin: 0 0 8px 0;
+            color: #2c3e50;
+            font-size: 14px;
+        }
+        
+        .btn {
+            background: #95a5a6;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            margin: 2px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 11px;
+            font-family: inherit;
+        }
+        
+        .btn:hover {
+            background: #7f8c8d;
+        }
+        
+        .btn.primary {
+            background: #27ae60;
+        }
+        
+        .btn.primary:hover {
+            background: #229954;
+        }
+        
+        .btn.danger {
+            background: #e74c3c;
+        }
+        
+        .btn.danger:hover {
+            background: #c0392b;
+        }
+        
+        .btn.warning {
+            background: #f39c12;
+        }
+        
+        .btn.warning:hover {
+            background: #e67e22;
+        }
+        
+        /* Canvas */
+        #waterworld-canvas {
+            border: 2px solid #34495e;
+            background-color: #ecf0f1;
+            margin: 10px 0;
+        }
+        
+        /* Statistics */
+        .stats {
+            margin-bottom: 20px;
+        }
+        
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            margin: 5px 0;
+            font-size: 12px;
+        }
+        
+        .stat-label {
+            color: #7f8c8d;
+        }
+        
+        .stat-value {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        /* Chart */
+        .chart-container {
+            margin-top: 20px;
+        }
+        
+        #reward-chart {
+            border: 1px solid #ddd;
+            background-color: white;
+        }
+        
+        /* Status indicators */
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+        
+        .status-running {
+            background-color: #27ae60;
+        }
+        
+        .status-paused {
+            background-color: #f39c12;
+        }
+        
+        .status-stopped {
+            background-color: #e74c3c;
+        }
+        
+        .status-training {
+            background-color: #3498db;
+        }
+        
+        /* Curiosity visualization */
+        .curiosity-info {
+            margin-top: 15px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 3px;
+            border-left: 4px solid #9b59b6;
+        }
+        
+        .curiosity-info h4 {
+            margin: 0 0 5px 0;
+            color: #8e44ad;
+            font-size: 14px;
+        }
+        
+        /* File upload */
+        .file-upload {
+            margin: 10px 0;
+        }
+        
+        .file-upload input[type="file"] {
+            font-size: 11px;
+            margin-bottom: 5px;
+        }
+        
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            
+            .left-panel, .right-panel {
+                order: 2;
+            }
+            
+            .simulation-area {
+                order: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🐟 PPO + Curiosity Fish: Interactive Waterworld RL</h1>
+            <p>Watch a fish learn to navigate using PPO with intrinsic curiosity</p>
+        </div>
+        
+        <div class="main-content">
+            <!-- Left Panel: Parameters and Controls -->
+            <div class="left-panel">
+                <!-- Agent Parameters (Karpathy style) -->
+                <div class="param-box">
+                    <h3>Agent Parameters</h3>
+                    <textarea id="agent-params" class="param-textarea">learning_rate = 3e-4
+gamma = 0.99
+gae_lambda = 0.95
+clip_range = 0.2
+entropy_coef = 0.01
+curiosity_weight = 0.1
+batch_size = 64
+n_epochs = 10
+hidden_dim = 256</textarea>
+                    <button class="update-btn" onclick="updateParams()">Update Agent</button>
+                </div>
+                
+                <!-- Speed Controls -->
+                <div class="control-group">
+                    <h4>Simulation Speed</h4>
+                    <button class="btn" onclick="setSpeed(100)">Go very fast</button>
+                    <button class="btn" onclick="setSpeed(10)">Go fast</button>
+                    <button class="btn primary" onclick="setSpeed(1)">Go normal</button>
+                    <button class="btn" onclick="setSpeed(0.1)">Go slow</button>
+                </div>
+                
+                <!-- Agent Management -->
+                <div class="control-group">
+                    <h4>Agent Control</h4>
+                    <button class="btn primary" onclick="startSimulation()">▶️ Start</button>
+                    <button class="btn warning" onclick="pauseSimulation()">⏸️ Pause</button>
+                    <button class="btn danger" onclick="stopSimulation()">⏹️ Stop</button>
+                    <button class="btn" onclick="resetSimulation()">🔄 Reset</button>
+                </div>
+                
+                <!-- Training Control -->
+                <div class="control-group">
+                    <h4>Training Mode</h4>
+                    <button class="btn primary" onclick="startTraining()">🎓 Start Training</button>
+                    <button class="btn warning" onclick="stopTraining()">⏸️ Stop Training</button>
+                </div>
+                
+                <!-- Model Management -->
+                <div class="control-group">
+                    <h4>Model Management</h4>
+                    <button class="btn" onclick="saveModel()">💾 Save Model</button>
+                    <div class="file-upload">
+                        <input type="file" id="model-file" accept=".pt">
+                        <button class="btn" onclick="loadModel()">📁 Load Model</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Center: Simulation Canvas -->
+            <div class="simulation-area">
+                <h3>🎮 Live Simulation</h3>
+                <canvas id="waterworld-canvas" width="400" height="300"></canvas>
+                
+                <!-- Status Display -->
+                <div class="stats">
+                    <div class="stat-item">
+                        <span class="stat-label">Status:</span>
+                        <span class="stat-value">
+                            <span id="status-indicator" class="status-indicator status-stopped"></span>
+                            <span id="status-text">Stopped</span>
+                        </span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Step:</span>
+                        <span class="stat-value" id="step-count">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Episode Reward:</span>
+                        <span class="stat-value" id="episode-reward">0.00</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Speed:</span>
+                        <span class="stat-value" id="speed-display">1.0x</span>
+                    </div>
+                </div>
+                
+                <!-- Curiosity Information -->
+                <div class="curiosity-info">
+                    <h4>🧠 Curiosity Module</h4>
+                    <div class="stat-item">
+                        <span class="stat-label">Prediction Error:</span>
+                        <span class="stat-value" id="prediction-error">0.000</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Intrinsic Reward:</span>
+                        <span class="stat-value" id="intrinsic-reward">0.000</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Exploration Trend:</span>
+                        <span class="stat-value" id="exploration-trend">Stable</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Right Panel: Performance and Analytics -->
+            <div class="right-panel">
+                <!-- Performance Chart -->
+                <div class="chart-container">
+                    <h3>📈 Performance</h3>
+                    <canvas id="reward-chart" width="280" height="200"></canvas>
+                </div>
+                
+                <!-- Training Statistics -->
+                <div class="stats">
+                    <h4>Training Statistics</h4>
+                    <div class="stat-item">
+                        <span class="stat-label">Training Steps:</span>
+                        <span class="stat-value" id="training-steps">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Episodes:</span>
+                        <span class="stat-value" id="episode-count">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Actor Loss:</span>
+                        <span class="stat-value" id="actor-loss">0.000</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Critic Loss:</span>
+                        <span class="stat-value" id="critic-loss">0.000</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Memory Size:</span>
+                        <span class="stat-value" id="memory-size">0</span>
+                    </div>
+                </div>
+                
+                <!-- Agent Performance -->
+                <div class="stats">
+                    <h4>Agent Performance</h4>
+                    <div class="stat-item">
+                        <span class="stat-label">Avg Reward (100):</span>
+                        <span class="stat-value" id="avg-reward">0.000</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Avg Curiosity:</span>
+                        <span class="stat-value" id="avg-curiosity">0.000</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Food Eaten:</span>
+                        <span class="stat-value" id="food-eaten">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Poison Eaten:</span>
+                        <span class="stat-value" id="poison-eaten">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Socket.IO -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    
+    <!-- Main JavaScript -->
+    <script>
+        // Global variables
+        let socket;
+        let canvas, ctx;
+        let rewardChart, rewardCtx;
+        let currentData = null;
+        let rewardHistory = [];
+        let curiosityHistory = [];
+        
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeCanvas();
+            initializeChart();
+            connectWebSocket();
+        });
+        
+        function initializeCanvas() {
+            canvas = document.getElementById('waterworld-canvas');
+            ctx = canvas.getContext('2d');
+            
+            // Set canvas background
+            ctx.fillStyle = '#ecf0f1';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw initial message
+            ctx.fillStyle = '#7f8c8d';
+            ctx.font = '20px Courier New';
+            ctx.textAlign = 'center';
+            ctx.fillText('Click Start to begin simulation', canvas.width/2, canvas.height/2);
+        }
+        
+        function initializeChart() {
+            rewardChart = document.getElementById('reward-chart');
+            rewardCtx = rewardChart.getContext('2d');
+            
+            // Clear chart
+            rewardCtx.fillStyle = 'white';
+            rewardCtx.fillRect(0, 0, rewardChart.width, rewardChart.height);
+            
+            // Draw axes
+            rewardCtx.strokeStyle = '#bdc3c7';
+            rewardCtx.lineWidth = 1;
+            rewardCtx.beginPath();
+            rewardCtx.moveTo(30, 10);
+            rewardCtx.lineTo(30, rewardChart.height - 30);
+            rewardCtx.lineTo(rewardChart.width - 10, rewardChart.height - 30);
+            rewardCtx.stroke();
+            
+            // Labels
+            rewardCtx.fillStyle = '#7f8c8d';
+            rewardCtx.font = '10px Courier New';
+            rewardCtx.textAlign = 'center';
+            rewardCtx.fillText('Reward over Time', rewardChart.width/2, 20);
+        }
+        
+        function connectWebSocket() {
+            socket = io();
+            
+            socket.on('connect', function() {
+                console.log('Connected to server');
+                updateStatus('Connected', 'stopped');
+            });
+            
+            socket.on('state_update', function(data) {
+                currentData = data;
+                updateVisualization(data);
+                updateStatistics(data);
+                updateChart(data);
+            });
+            
+            socket.on('training_metrics', function(metrics) {
+                updateTrainingMetrics(metrics);
+            });
+            
+            socket.on('disconnect', function() {
+                console.log('Disconnected from server');
+                updateStatus('Disconnected', 'stopped');
+            });
+        }
+        
+        function updateVisualization(data) {
+            if (!data.simulation) return;
+            
+            const sim = data.simulation;
+            
+            // Clear canvas
+            ctx.fillStyle = '#ecf0f1';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw sensor rays (faint)
+            if (sim.sensors) {
+                ctx.strokeStyle = 'rgba(52, 73, 94, 0.1)';
+                ctx.lineWidth = 1;
+                sim.sensors.forEach(sensor => {
+                    ctx.beginPath();
+                    ctx.moveTo(sensor.start.x, sensor.start.y);
+                    ctx.lineTo(sensor.end.x, sensor.end.y);
+                    ctx.stroke();
+                });
+            }
+            
+            // Draw food (red circles)
+            ctx.fillStyle = '#e74c3c';
+            sim.food.forEach(food => {
+                ctx.beginPath();
+                ctx.arc(food.x, food.y, food.radius, 0, 2 * Math.PI);
+                ctx.fill();
+            });
+            
+            // Draw poison (green circles)
+            ctx.fillStyle = '#27ae60';
+            sim.poison.forEach(poison => {
+                ctx.beginPath();
+                ctx.arc(poison.x, poison.y, poison.radius, 0, 2 * Math.PI);
+                ctx.fill();
+            });
+            
+            // Draw fish (blue circle with direction indicator)
+            const fish = sim.fish;
+            ctx.fillStyle = '#3498db';
+            ctx.beginPath();
+            ctx.arc(fish.x, fish.y, fish.radius, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            // Fish direction indicator
+            ctx.strokeStyle = '#2980b9';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(fish.x, fish.y);
+            ctx.lineTo(
+                fish.x + Math.cos(fish.angle) * fish.radius * 1.5,
+                fish.y + Math.sin(fish.angle) * fish.radius * 1.5
+            );
+            ctx.stroke();
+        }
+        
+        function updateStatistics(data) {
+            document.getElementById('step-count').textContent = data.step_count || 0;
+            document.getElementById('episode-reward').textContent = (data.episode_reward || 0).toFixed(2);
+            
+            if (data.status) {
+                const status = data.status.training ? 'Training' : 
+                              data.status.running ? 'Running' : 'Stopped';
+                updateStatus(status, data.status.running ? 'running' : 'stopped');
+                document.getElementById('speed-display').textContent = (data.status.speed || 1.0).toFixed(1) + 'x';
+            }
+            
+            if (data.agent_stats) {
+                const stats = data.agent_stats;
+                document.getElementById('training-steps').textContent = stats.training_step || 0;
+                document.getElementById('episode-count').textContent = stats.episode_count || 0;
+                document.getElementById('actor-loss').textContent = (stats.recent_actor_loss || 0).toFixed(3);
+                document.getElementById('critic-loss').textContent = (stats.recent_critic_loss || 0).toFixed(3);
+                document.getElementById('memory-size').textContent = stats.memory_size || 0;
+                document.getElementById('avg-reward').textContent = (stats.avg_total_reward || 0).toFixed(3);
+                document.getElementById('avg-curiosity').textContent = (stats.avg_curiosity || 0).toFixed(3);
+            }
+            
+            if (data.performance) {
+                document.getElementById('prediction-error').textContent = (data.performance.recent_curiosity || 0).toFixed(3);
+                document.getElementById('intrinsic-reward').textContent = (data.performance.recent_curiosity || 0).toFixed(3);
+            }
+        }
+        
+        function updateChart(data) {
+            if (!data.performance) return;
+            
+            const rewards = data.performance.reward_history || [];
+            const curiosity = data.performance.curiosity_history || [];
+            
+            // Clear chart
+            rewardCtx.fillStyle = 'white';
+            rewardCtx.fillRect(0, 0, rewardChart.width, rewardChart.height);
+            
+            // Redraw axes
+            rewardCtx.strokeStyle = '#bdc3c7';
+            rewardCtx.lineWidth = 1;
+            rewardCtx.beginPath();
+            rewardCtx.moveTo(30, 10);
+            rewardCtx.lineTo(30, rewardChart.height - 30);
+            rewardCtx.lineTo(rewardChart.width - 10, rewardChart.height - 30);
+            rewardCtx.stroke();
+            
+            if (rewards.length > 1) {
+                const maxVal = Math.max(...rewards, 1);
+                const minVal = Math.min(...rewards, -1);
+                const range = maxVal - minVal;
+                
+                // Draw reward line
+                rewardCtx.strokeStyle = '#e74c3c';
+                rewardCtx.lineWidth = 2;
+                rewardCtx.beginPath();
+                
+                rewards.forEach((reward, i) => {
+                    const x = 30 + (i / (rewards.length - 1)) * (rewardChart.width - 40);
+                    const y = rewardChart.height - 30 - ((reward - minVal) / range) * (rewardChart.height - 40);
+                    
+                    if (i === 0) {
+                        rewardCtx.moveTo(x, y);
+                    } else {
+                        rewardCtx.lineTo(x, y);
+                    }
+                });
+                rewardCtx.stroke();
+            }
+            
+            // Labels
+            rewardCtx.fillStyle = '#7f8c8d';
+            rewardCtx.font = '10px Courier New';
+            rewardCtx.textAlign = 'center';
+            rewardCtx.fillText('Reward over Time', rewardChart.width/2, 20);
+        }
+        
+        function updateTrainingMetrics(metrics) {
+            console.log('Training metrics:', metrics);
+        }
+        
+        function updateStatus(text, type) {
+            document.getElementById('status-text').textContent = text;
+            const indicator = document.getElementById('status-indicator');
+            indicator.className = 'status-indicator status-' + type;
+        }
+        
+        // Control functions
+        function startSimulation() {
+            fetch('/api/control/start', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => console.log('Start:', data));
+        }
+        
+        function pauseSimulation() {
+            fetch('/api/control/pause', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => console.log('Pause:', data));
+        }
+        
+        function stopSimulation() {
+            fetch('/api/control/stop', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => console.log('Stop:', data));
+        }
+        
+        function resetSimulation() {
+            fetch('/api/control/reset', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => console.log('Reset:', data));
+        }
+        
+        function startTraining() {
+            fetch('/api/control/start_training', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => console.log('Start training:', data));
+        }
+        
+        function stopTraining() {
+            fetch('/api/control/stop_training', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => console.log('Stop training:', data));
+        }
+        
+        function setSpeed(multiplier) {
+            fetch('/api/speed', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ multiplier: multiplier })
+            })
+            .then(response => response.json())
+            .then(data => console.log('Speed:', data));
+        }
+        
+        function updateParams() {
+            const paramsText = document.getElementById('agent-params').value;
+            const params = {};
+            
+            // Parse parameters from text
+            paramsText.split('\n').forEach(line => {
+                const match = line.match(/(\w+)\s*=\s*(.+)/);
+                if (match) {
+                    const key = match[1];
+                    let value = match[2].trim();
+                    
+                    // Convert to appropriate type
+                    if (value === 'true') value = true;
+                    else if (value === 'false') value = false;
+                    else if (!isNaN(value)) value = parseFloat(value);
+                    
+                    params[key] = value;
+                }
+            });
+            
+            fetch('/api/config', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(params)
+            })
+            .then(response => response.json())
+            .then(data => console.log('Config updated:', data));
+        }
+        
+        function saveModel() {
+            fetch('/api/model/save', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Model saved to: ' + data.filepath);
+                    } else {
+                        alert('Error saving model: ' + data.error);
+                    }
+                });
+        }
+        
+        function loadModel() {
+            const fileInput = document.getElementById('model-file');
+            if (fileInput.files.length === 0) {
+                alert('Please select a model file first');
+                return;
+            }
+            
+            // For now, just show success message
+            alert('Model loading functionality will be implemented');
+        }
+    </script>
+</body>
+</html>
