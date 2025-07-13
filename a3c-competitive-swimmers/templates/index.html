@@ -1,0 +1,386 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A3C Competitive Swimmers</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f0f0;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 20px;
+        }
+        
+        .main-panel {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .control-panel {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            height: fit-content;
+        }
+        
+        #canvas {
+            border: 2px solid #333;
+            border-radius: 4px;
+            display: block;
+            margin: 0 auto;
+        }
+        
+        .button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+        }
+        
+        .button:hover {
+            background: #0056b3;
+        }
+        
+        .button.danger {
+            background: #dc3545;
+        }
+        
+        .button.danger:hover {
+            background: #c82333;
+        }
+        
+        .button.success {
+            background: #28a745;
+        }
+        
+        .button.success:hover {
+            background: #218838;
+        }
+        
+        .metrics {
+            margin-top: 20px;
+        }
+        
+        .metric-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        
+        .status.training {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status.stopped {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .config-section {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 2px solid #eee;
+        }
+        
+        .config-item {
+            margin: 10px 0;
+        }
+        
+        .config-item label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        .config-item input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        h1, h2, h3 {
+            color: #333;
+            margin-top: 0;
+        }
+        
+        .agent-colors {
+            display: flex;
+            gap: 10px;
+            margin: 10px 0;
+        }
+        
+        .agent-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 2px solid #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="main-panel">
+            <h1>A3C Competitive Swimmers</h1>
+            <p>Watch multiple agents learn to compete for food using A3C with trust regions</p>
+            
+            <canvas id="canvas" width="400" height="400"></canvas>
+            
+            <div class="agent-colors">
+                <div>Agent Colors:</div>
+                <div class="agent-color" style="background-color: #ff6b6b;"></div>
+                <div class="agent-color" style="background-color: #4ecdc4;"></div>
+                <div class="agent-color" style="background-color: #45b7d1;"></div>
+                <div class="agent-color" style="background-color: #f9ca24;"></div>
+            </div>
+            
+            <div id="status" class="status stopped">Training Stopped</div>
+        </div>
+        
+        <div class="control-panel">
+            <h2>Training Control</h2>
+            <button id="startTraining" class="button success">Start Training</button>
+            <button id="stopTraining" class="button danger">Stop Training</button>
+            
+            <h3>Demo Control</h3>
+            <button id="startDemo" class="button">Start Demo</button>
+            <button id="stopDemo" class="button">Stop Demo</button>
+            <button id="resetDemo" class="button">Reset Demo</button>
+            
+            <h3>Model Management</h3>
+            <button id="saveModel" class="button">Save Model</button>
+            <button id="loadModel" class="button">Load Model</button>
+            
+            <div class="metrics">
+                <h3>Training Metrics</h3>
+                <div class="metric-item">
+                    <span>Total Steps:</span>
+                    <span id="totalSteps">0</span>
+                </div>
+                <div class="metric-item">
+                    <span>Total Episodes:</span>
+                    <span id="totalEpisodes">0</span>
+                </div>
+                <div class="metric-item">
+                    <span>Avg Reward:</span>
+                    <span id="avgReward">0.00</span>
+                </div>
+                <div class="metric-item">
+                    <span>Avg KL Divergence:</span>
+                    <span id="avgKL">0.000</span>
+                </div>
+                <div class="metric-item">
+                    <span>Active Workers:</span>
+                    <span id="activeWorkers">0</span>
+                </div>
+                <div class="metric-item">
+                    <span>Update Success Rate:</span>
+                    <span id="updateSuccessRate">0%</span>
+                </div>
+            </div>
+            
+            <div class="config-section">
+                <h3>Environment Config</h3>
+                <div class="config-item">
+                    <label for="foodSpawnRate">Food Spawn Rate:</label>
+                    <input type="number" id="foodSpawnRate" value="0.02" step="0.001" min="0" max="1">
+                </div>
+                <div class="config-item">
+                    <label for="maxFoodItems">Max Food Items:</label>
+                    <input type="number" id="maxFoodItems" value="8" min="1" max="20">
+                </div>
+                <div class="config-item">
+                    <label for="competitiveRewards">Competitive Rewards:</label>
+                    <input type="checkbox" id="competitiveRewards" checked>
+                </div>
+                <button id="updateConfig" class="button">Update Config</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Canvas and rendering
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Agent colors
+        const agentColors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#f9ca24', '#a55eea', '#26de81'];
+        
+        // State
+        let currentState = null;
+        let isRunning = false;
+        
+        // Button handlers
+        document.getElementById('startTraining').onclick = () => {
+            fetch('/api/start_training', {method: 'POST'})
+                .then(r => r.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        document.getElementById('status').className = 'status training';
+                        document.getElementById('status').textContent = 'Training Active';
+                    }
+                });
+        };
+        
+        document.getElementById('stopTraining').onclick = () => {
+            fetch('/api/stop_training', {method: 'POST'})
+                .then(r => r.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        document.getElementById('status').className = 'status stopped';
+                        document.getElementById('status').textContent = 'Training Stopped';
+                    }
+                });
+        };
+        
+        document.getElementById('startDemo').onclick = () => {
+            fetch('/api/start_demo', {method: 'POST'});
+        };
+        
+        document.getElementById('stopDemo').onclick = () => {
+            fetch('/api/stop_demo', {method: 'POST'});
+        };
+        
+        document.getElementById('resetDemo').onclick = () => {
+            fetch('/api/reset_demo', {method: 'POST'});
+        };
+        
+        document.getElementById('saveModel').onclick = () => {
+            fetch('/api/save_model', {method: 'POST'})
+                .then(r => r.json())
+                .then(data => alert(data.message));
+        };
+        
+        document.getElementById('updateConfig').onclick = () => {
+            const config = {
+                food_spawn_rate: parseFloat(document.getElementById('foodSpawnRate').value),
+                max_food_items: parseInt(document.getElementById('maxFoodItems').value),
+                competitive_rewards: document.getElementById('competitiveRewards').checked
+            };
+            
+            fetch('/api/update_config', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(config)
+            }).then(r => r.json()).then(data => alert(data.message));
+        };
+        
+        // Rendering
+        function render() {
+            if (!currentState) return;
+            
+            // Clear canvas
+            ctx.fillStyle = '#e8f4f8';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw food items
+            ctx.fillStyle = '#ff4757';
+            currentState.food_items.forEach(food => {
+                ctx.beginPath();
+                ctx.arc(food.x, food.y, food.radius, 0, 2 * Math.PI);
+                ctx.fill();
+            });
+            
+            // Draw poison items
+            if (currentState.poison_items) {
+                ctx.fillStyle = '#2ed573';
+                currentState.poison_items.forEach(poison => {
+                    ctx.beginPath();
+                    ctx.arc(poison.x, poison.y, poison.radius, 0, 2 * Math.PI);
+                    ctx.fill();
+                });
+            }
+            
+            // Draw agents
+            currentState.agents.forEach((agent, index) => {
+                ctx.fillStyle = agentColors[index % agentColors.length];
+                ctx.beginPath();
+                ctx.arc(agent.x, agent.y, agent.radius, 0, 2 * Math.PI);
+                ctx.fill();
+                
+                // Draw agent ID
+                ctx.fillStyle = 'white';
+                ctx.font = '12px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(agent.id.toString(), agent.x, agent.y + 4);
+                
+                // Draw velocity vector
+                ctx.strokeStyle = agentColors[index % agentColors.length];
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(agent.x, agent.y);
+                ctx.lineTo(agent.x + agent.vx * 5, agent.y + agent.vy * 5);
+                ctx.stroke();
+            });
+            
+            // Draw step counter
+            ctx.fillStyle = '#333';
+            ctx.font = '16px Arial';
+            ctx.textAlign = 'left';
+            ctx.fillText(`Step: ${currentState.step_count}`, 10, 25);
+        }
+        
+        // Update loop
+        function update() {
+            // Get current state
+            fetch('/api/get_state')
+                .then(r => r.json())
+                .then(data => {
+                    currentState = data;
+                    render();
+                });
+            
+            // Get metrics
+            fetch('/api/get_metrics')
+                .then(r => r.json())
+                .then(data => {
+                    if (data.global_stats) {
+                        document.getElementById('totalSteps').textContent = data.global_stats.total_steps || 0;
+                        document.getElementById('totalEpisodes').textContent = data.global_stats.total_episodes || 0;
+                        document.getElementById('avgReward').textContent = (data.global_stats.avg_reward_across_workers || 0).toFixed(2);
+                        document.getElementById('avgKL').textContent = (data.global_stats.avg_kl_divergence || 0).toFixed(3);
+                        document.getElementById('activeWorkers').textContent = data.global_stats.num_active_workers || 0;
+                        
+                        // Calculate average update success rate
+                        if (data.worker_stats && data.worker_stats.length > 0) {
+                            const avgSuccessRate = data.worker_stats.reduce((sum, worker) => 
+                                sum + (worker.update_success_rate || 0), 0) / data.worker_stats.length;
+                            document.getElementById('updateSuccessRate').textContent = (avgSuccessRate * 100).toFixed(1) + '%';
+                        }
+                    }
+                });
+        }
+        
+        // Start update loop
+        setInterval(update, 100); // 10 FPS
+        update(); // Initial update
+    </script>
+</body>
+</html>
+    
