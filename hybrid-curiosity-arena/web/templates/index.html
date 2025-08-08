@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hybrid Multi-Agent Curiosity Arena</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .header h1 {
+            color: #2c3e50;
+            margin: 0;
+            font-size: 28px;
+        }
+        
+        .header p {
+            color: #7f8c8d;
+            margin: 5px 0;
+            font-size: 14px;
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 300px 1fr 300px;
+            gap: 20px;
+            align-items: start;
+        }
+        
+        .left-panel, .right-panel {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+        }
+        
+        .simulation-area {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            text-align: center;
+        }
+        
+        /* Parameter Box (Karpathy style) */
+        .param-box {
+            margin-bottom: 20px;
+        }
+        
+        .param-box h3 {
+            margin: 0 0 10px 0;
+            color: #2c3e50;
+            font-size: 16px;
+        }
+        
+        .param-textarea {
+            width: 100%;
+            height: 200px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            border: 1px solid #ddd;
+            padding: 10px;
+            resize: vertical;
+            background-color: #f8f9fa;
+        }
+        
+        .update-btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+        
+        .update-btn:hover {
+            background: #2980b9;
+        }
+        
+        /* Control Buttons */
+        .controls {
+            margin-bottom: 20px;
+        }
+        
+        .control-group {
+            margin-bottom: 15px;
+        }
+        
+        .control-group h4 {
+            margin: 0 0 8px 0;
+            color: #2c3e50;
+            font-size: 14px;
+        }
+        
+        .btn {
+            background: #95a5a6;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            margin: 2px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 11px;
+            font-family: inherit;
+        }
+        
+        .btn:hover {
+            background: #7f8c8d;
+        }
+        
+        .btn.primary {
+            background: #27ae60;
+        }
+        
+        .btn.primary:hover {
+            background: #229954;
+        }
+        
+        .btn.danger {
+            background: #e74c3c;
+        }
+        
+        .btn.danger:hover {
+            background: #c0392b;
+        }
+        
+        .btn.warning {
+            background: #f39c12;
+        }
+        
+        .btn.warning:hover {
+            background: #e67e22;
+        }
+        
+        /* Canvas */
+        #arena-canvas {
+            border: 2px solid #34495e;
+            background-color: #ecf0f1;
+            margin: 10px 0;
+        }
+        
+        /* Statistics */
+        .stats {
+            margin-bottom: 20px;
+        }
+        
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            margin: 5px 0;
+            font-size: 12px;
+        }
+        
+        .stat-label {
+            color: #7f8c8d;
+        }
+        
+        .stat-value {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        /* Chart */
+        .chart-container {
+            margin-top: 20px;
+        }
+        
+        #performance-chart {
+            border: 1px solid #ddd;
+            background-color: white;
+        }
+        
+        /* Status indicators */
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+        
+        .status-running {
+            background-color: #27ae60;
+        }
+        
+        .status-paused {
+            background-color: #f39c12;
+        }
+        
+        .status-stopped {
+            background-color: #e74c3c;
+        }
+        
+        .status-training {
+            background-color: #3498db;
+        }
+        
+        /* Agent type indicators */
+        .agent-type-curious { color: #9b59b6; }
+        .agent-type-competitive { color: #e74c3c; }
+        .agent-type-hybrid { color: #f39c12; }
+        .agent-type-adaptive { color: #3498db; }
+        
+        /* Population info */
+        .population-info {
+            margin-top: 15px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 3px;
+            border-left: 4px solid #3498db;
+        }
+        
+        .population-info h4 {
+            margin: 0 0 5px 0;
+            color: #2c3e50;
+            font-size: 14px;
+        }
+        
+        .agent-count {
+            display: flex;
+            justify-content: space-between;
+            margin: 3px 0;
+            font-size: 11px;
+        }
+        
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            
+            .left-panel, .right-panel {
+                order: 2;
+            }
+            
+            .simulation-area {
+                order: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧠 Hybrid Multi-Agent Curiosity Arena</h1>
+            <p>Watch different RL algorithms compete and cooperate in real-time</p>
+            <p>PPO+Curiosity vs A3C+Competition vs Hybrid vs Adaptive agents</p>
+        </div>
+        
+        <div class="main-content">
+            <!-- Left Panel: Parameters and Controls -->
+            <div class="left-panel">
+                <!-- Population Parameters -->
+                <div class="param-box">
+                    <h3>Population Composition</h3>
+                    <textarea id="population-params" class="param-textarea">curious_agents = {{ config.training.agent_composition.curious }}
+competitive_agents = {{ config.training.agent_composition.competitive }}
+hybrid_agents = {{ config.training.agent_composition.hybrid }}
+adaptive_agents = {{ config.training.agent_composition.adaptive }}
+
+# Environment
+world_size = {{ config.environment.world_width }}x{{ config.environment.world_height }}
+max_food = {{ config.environment.max_food_items }}
+food_spawn_rate = {{ config.environment.food_spawn_rate }}
+
+# Reward weights
+curiosity_weight = 0.3
+competition_weight = 0.4
+cooperation_weight = 0.2
+survival_weight = 0.1</textarea>
+                    <button class="update-btn" onclick="updatePopulation()">Update Population</button>
+                </div>
+                
+                <!-- Speed Controls -->
+                <div class="control-group">
+                    <h4>Simulation Speed</h4>
+                    <button class="btn" onclick="setSpeed(100)">Go very fast</button>
+                    <button class="btn" onclick="setSpeed(10)">Go fast</button>
+                    <button class="btn primary" onclick="setSpeed(1)">Go normal</button>
+                    <button class="btn" onclick="setSpeed(0.1)">Go slow</button>
+                </div>
+                
+                <!-- Simulation Control -->
+                <div class="control-group">
+                    <h4>Simulation Control</h4>
+                    <button class="btn primary" onclick="startSimulation()">▶️ Start</button>
+                    <button class="btn warning" onclick="pauseSimulation()">⏸️ Pause</button>
+                    <button class="btn danger" onclick="stopSimulation()">⏹️ Stop</button>
+                    <button class="btn" onclick="resetSimulation()">🔄 Reset</button>
+                </div>
+                
+                <!-- Training Control -->
+                <div class="control-group">
+                    <h4>Training Mode</h4>
+                    <button class="btn primary" onclick="startTraining()">🎓 Start Training</button>
+                    <button class="btn warning" onclick="stopTraining()">⏸️ Stop Training</button>
+                </div>
+                
+                <!-- Experiment Presets -->
+                <div class="control-group">
+                    <h4>Experiment Presets</h4>
+                    <button class="btn" onclick="loadExperiment('pure_curious')">Pure Curious</button>
+                    <button class="btn" onclick="loadExperiment('pure_competitive')">Pure Competitive</button>
+                    <button class="btn" onclick="loadExperiment('mixed_pop')">Mixed Population</button>
+                    <button class="btn" onclick="loadExperiment('hybrid_evolution')">Hybrid Evolution</button>
+                </div>
+            </div>
+            
+            <!-- Center: Simulation Canvas -->
+            <div class="simulation-area">
+                <h3>🎮 Multi-Agent Arena</h3>
+                <canvas id="arena-canvas" width="600" height="400"></canvas>
+                
+                <!-- Status Display -->
+                <div class="stats">
+                    <div class="stat-item">
+                        <span class="stat-label">Status:</span>
+                        <span class="stat-value">
+                            <span id="status-indicator" class="status-indicator status-stopped"></span>
+                            <span id="status-text">Ready to start</span>
+                        </span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Step:</span>
+                        <span class="stat-value" id="step-count">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Episode:</span>
+                        <span class="stat-value" id="episode-count">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Speed:</span>
+                        <span class="stat-value" id="speed-display">1.0x</span>
+                    </div>
+                </div>
+                
+                <!-- Population Information -->
+                <div class="population-info">
+                    <h4>👥 Active Agents</h4>
+                    <div class="agent-count">
+                        <span class="agent-type-curious">🔍 Curious:</span>
+                        <span id="curious-count">{{ config.training.agent_composition.curious }}</span>
+                    </div>
+                    <div class="agent-count">
+                        <span class="agent-type-competitive">⚔️ Competitive:</span>
+                        <span id="competitive-count">{{ config.training.agent_composition.competitive }}</span>
+                    </div>
+                    <div class="agent-count">
+                        <span class="agent-type-hybrid">🔄 Hybrid:</span>
+                        <span id="hybrid-count">{{ config.training.agent_composition.hybrid }}</span>
+                    </div>
+                    <div class="agent-count">
+                        <span class="agent-type-adaptive">🧬 Adaptive:</span>
+                        <span id="adaptive-count">{{ config.training.agent_composition.adaptive }}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Right Panel: Performance and Analytics -->
+            <div class="right-panel">
+                <!-- Performance Chart -->
+                <div class="chart-container">
+                    <h3>📈 Performance Comparison</h3>
+                    <canvas id="performance-chart" width="280" height="200"></canvas>
+                </div>
+                
+                <!-- Strategy Statistics -->
+                <div class="stats">
+                    <h4>Strategy Performance</h4>
+                    <div class="stat-item">
+                        <span class="stat-label agent-type-curious">Curious Avg:</span>
+                        <span class="stat-value" id="curious-avg">0.000</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label agent-type-competitive">Competitive Avg:</span>
+                        <span class="stat-value" id="competitive-avg">0.000</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label agent-type-hybrid">Hybrid Avg:</span>
+                        <span class="stat-value" id="hybrid-avg">0.000</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label agent-type-adaptive">Adaptive Avg:</span>
+                        <span class="stat-value" id="adaptive-avg">0.000</span>
+                    </div>
+                </div>
+                
+                <!-- Learning Statistics -->
+                <div class="stats">
+                    <h4>Learning Metrics</h4>
+                    <div class="stat-item">
+                        <span class="stat-label">Total Steps:</span>
+                        <span class="stat-value" id="total-steps">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Strategy Switches:</span>
+                        <span class="stat-value" id="strategy-switches">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Cooperation Events:</span>
+                        <span class="stat-value" id="cooperation-events">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Competition Events:</span>
+                        <span class="stat-value" id="competition-events">0</span>
+                    </div>
+                </div>
+                
+                <!-- Environment Statistics -->
+                <div class="stats">
+                    <h4>Environment Stats</h4>
+                    <div class="stat-item">
+                        <span class="stat-label">Food Items:</span>
+                        <span class="stat-value" id="food-count">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Poison Items:</span>
+                        <span class="stat-value" id="poison-count">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Agent Collisions:</span>
+                        <span class="stat-value" id="collision-count">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Resource Efficiency:</span>
+                        <span class="stat-value" id="resource-efficiency">0.0%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Socket.IO -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    
+    <!-- Main JavaScript -->
+    <script>
+        // Global variables
+        let socket;
+        let canvas, ctx;
+        let performanceChart, performanceCtx;
+        let simulationRunning = false;
+        let demoAgents = [];
+        let demoFood = [];
+        let demoPoison = [];
+        let animationId;
+        
+        // Agent colors (avoiding red/green which are for food/poison)
+        const agentColors = {
+            curious: '#9b59b6',      // Purple for curious
+            competitive: '#34495e',  // Dark blue-gray for competitive
+            hybrid: '#f39c12',       // Orange for hybrid
+            adaptive: '#3498db'      // Light blue for adaptive
+        };
+        
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeCanvas();
+            initializeChart();
+            connectWebSocket();
+            createDemoEnvironment();
+        });
+        
+        function initializeCanvas() {
+            canvas = document.getElementById('arena-canvas');
+            ctx = canvas.getContext('2d');
+            
+            // Set canvas background
+            ctx.fillStyle = '#ecf0f1';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw initial message
+            ctx.fillStyle = '#7f8c8d';
+            ctx.font = '18px Courier New';
+            ctx.textAlign = 'center';
+            ctx.fillText('Hybrid Multi-Agent Arena', canvas.width/2, canvas.height/2 - 20);
+            ctx.font = '14px Courier New';
+            ctx.fillText('Click Start to begin simulation', canvas.width/2, canvas.height/2 + 10);
+        }
+        
+        function initializeChart() {
+            performanceChart = document.getElementById('performance-chart');
+            performanceCtx = performanceChart.getContext('2d');
+            
+            // Clear chart
+            performanceCtx.fillStyle = 'white';
+            performanceCtx.fillRect(0, 0, performanceChart.width, performanceChart.height);
+            
+            // Draw axes
+            performanceCtx.strokeStyle = '#bdc3c7';
+            performanceCtx.lineWidth = 1;
+            performanceCtx.beginPath();
+            performanceCtx.moveTo(30, 10);
+            performanceCtx.lineTo(30, performanceChart.height - 30);
+            performanceCtx.lineTo(performanceChart.width - 10, performanceChart.height - 30);
+            performanceCtx.stroke();
+            
+            // Labels
+            performanceCtx.fillStyle = '#7f8c8d';
+            performanceCtx.font = '10px Courier New';
+            performanceCtx.textAlign = 'center';
+            performanceCtx.fillText('Strategy Performance', performanceChart.width/2, 20);
+        }
+        
+        function connectWebSocket() {
+            socket = io();
+            
+            socket.on('connect', function() {
+                console.log('Connected to Hybrid Arena');
+                updateStatus('Connected', 'stopped');
+            });
+            
+            socket.on('disconnect', function() {
+                console.log('Disconnected from server');
+                updateStatus('Disconnected', 'stopped');
+            });
+        }
+        
+        function createDemoEnvironment() {
+            // Create demo agents with more realistic behavior
+            demoAgents = [
+                { id: 0, type: 'curious', x: 150, y: 150, angle: 0, vx: 1, vy: 0.5, radius: 8, reward: 0, energy: 100 },
+                { id: 1, type: 'competitive', x: 450, y: 150, angle: Math.PI, vx: -1, vy: 0.3, radius: 8, reward: 0, energy: 100 },
+                { id: 2, type: 'hybrid', x: 150, y: 250, angle: Math.PI/2, vx: 0.5, vy: 1, radius: 8, reward: 0, energy: 100 },
+                { id: 3, type: 'adaptive', x: 450, y: 250, angle: -Math.PI/2, vx: -0.3, vy: -1, radius: 8, reward: 0, energy: 100 }
+            ];
+            
+            // Create initial food and poison
+            spawnFood();
+            spawnPoison();
+        }
+        
+        function spawnFood() {
+            // Spawn food dynamically
+            while (demoFood.length < 15) {
+                demoFood.push({
+                    x: Math.random() * (canvas.width - 40) + 20,
+                    y: Math.random() * (canvas.height - 40) + 20,
+                    radius: 3 + Math.random() * 2,
+                    value: 10 + Math.random() * 20
+                });
+            }
+        }
+        
+        function spawnPoison() {
+            // Spawn poison dynamically
+            while (demoPoison.length < 8) {
+                demoPoison.push({
+                    x: Math.random() * (canvas.width - 40) + 20,
+                    y: Math.random() * (canvas.height - 40) + 20,
+                    radius: 3 + Math.random() * 2,
+                    damage: 15 + Math.random() * 10
+                });
+            }
+        }
+        
+        let stepCount = 0;
+        let episodeCount = 0;
+        let totalSteps = 0;
+        let performanceData = {
+            curious: [],
+            competitive: [],
+            hybrid: [],
+            adaptive: []
+        };
+        
+        function updateSimulation() {
+            if (!simulationRunning) return;
+            
+            stepCount++;
+            totalSteps++;
+            
+            // Update agent positions with more intelligent behavior
+            demoAgents.forEach(agent => {
+                // Add some intelligence - agents move toward food and away from poison
+                let nearestFood = findNearestItem(agent, demoFood);
+                let nearestPoison = findNearestItem(agent, demoPoison);
+                
+                // Adjust velocity based on agent type and nearby items
+                if (nearestFood && distance(agent, nearestFood) < 80) {
+                    // Move toward food
+                    let dx = nearestFood.x - agent.x;
+                    let dy = nearestFood.y - agent.y;
+                    let dist = Math.sqrt(dx*dx + dy*dy);
+                    agent.vx += (dx/dist) * 0.1;
+                    agent.vy += (dy/dist) * 0.1;
+                }
+                
+                if (nearestPoison && distance(agent, nearestPoison) < 60) {
+                    // Move away from poison
+                    let dx = agent.x - nearestPoison.x;
+                    let dy = agent.y - nearestPoison.y;
+                    let dist = Math.sqrt(dx*dx + dy*dy);
+                    agent.vx += (dx/dist) * 0.15;
+                    agent.vy += (dy/dist) * 0.15;
+                }
+                
+                // Add some randomness based on agent type
+                if (agent.type === 'curious') {
+                    agent.vx += (Math.random() - 0.5) * 0.2;
+                    agent.vy += (Math.random() - 0.5) * 0.2;
+                } else if (agent.type === 'competitive') {
+                    // Competitive agents move more aggressively toward food
+                    if (nearestFood) {
+                        let dx = nearestFood.x - agent.x;
+                        let dy = nearestFood.y - agent.y;
+                        let dist = Math.sqrt(dx*dx + dy*dy);
+                        agent.vx += (dx/dist) * 0.05;
+                        agent.vy += (dy/dist) * 0.05;
+                    }
+                }
+                
+                // Limit velocity
+                let speed = Math.sqrt(agent.vx*agent.vx + agent.vy*agent.vy);
+                if (speed > 2) {
+                    agent.vx = (agent.vx/speed) * 2;
+                    agent.vy = (agent.vy/speed) * 2;
+                }
+                
+                // Update position
+                agent.x += agent.vx;
+                agent.y += agent.vy;
+                
+                // Bounce off walls
+                if (agent.x <= agent.radius || agent.x >= canvas.width - agent.radius) {
+                    agent.vx *= -0.8;
+                }
+                if (agent.y <= agent.radius || agent.y >= canvas.height - agent.radius) {
+                    agent.vy *= -0.8;
+                }
+                
+                // Keep in bounds
+                agent.x = Math.max(agent.radius, Math.min(canvas.width - agent.radius, agent.x));
+                agent.y = Math.max(agent.radius, Math.min(canvas.height - agent.radius, agent.y));
+                
+                // Update angle based on velocity
+                agent.angle = Math.atan2(agent.vy, agent.vx);
+                
+                // Check food consumption
+                checkFoodConsumption(agent);
+                checkPoisonConsumption(agent);
+            });
+            
+            // Randomly spawn new food and poison
+            if (Math.random() < 0.02) spawnFood();
+            if (Math.random() < 0.01) spawnPoison();
+            
+            // Update statistics
+            updateLiveStatistics();
+            
+            // Draw everything
+            drawSimulation();
+            
+            // Continue animation
+            animationId = requestAnimationFrame(updateSimulation);
+        }
+        
+        function findNearestItem(agent, items) {
+            let nearest = null;
+            let minDist = Infinity;
+            
+            items.forEach(item => {
+                let dist = distance(agent, item);
+                if (dist < minDist) {
+                    minDist = dist;
+                    nearest = item;
+                }
+            });
+            
+            return nearest;
+        }
+        
+        function distance(a, b) {
+            let dx = a.x - b.x;
+            let dy = a.y - b.y;
+            return Math.sqrt(dx*dx + dy*dy);
+        }
+        
+        function checkFoodConsumption(agent) {
+            for (let i = demoFood.length - 1; i >= 0; i--) {
+                let food = demoFood[i];
+                if (distance(agent, food) < agent.radius + food.radius) {
+                    // Agent ate food
+                    agent.reward += food.value;
+                    agent.energy = Math.min(100, agent.energy + 10);
+                    demoFood.splice(i, 1);
+                    
+                    // Update performance data
+                    if (!performanceData[agent.type]) performanceData[agent.type] = [];
+                    performanceData[agent.type].push(agent.reward);
+                    if (performanceData[agent.type].length > 50) {
+                        performanceData[agent.type].shift();
+                    }
+                    break;
+                }
+            }
+        }
+        
+        function checkPoisonConsumption(agent) {
+            for (let i = demoPoison.length - 1; i >= 0; i--) {
+                let poison = demoPoison[i];
+                if (distance(agent, poison) < agent.radius + poison.radius) {
+                    // Agent ate poison
+                    agent.reward -= poison.damage;
+                    agent.energy = Math.max(0, agent.energy - 20);
+                    demoPoison.splice(i, 1);
+                    break;
+                }
+            }
+        }
+        
+        function updateLiveStatistics() {
+            document.getElementById('step-count').textContent = stepCount;
+            document.getElementById('total-steps').textContent = totalSteps;
+            document.getElementById('food-count').textContent = demoFood.length;
+            document.getElementById('poison-count').textContent = demoPoison.length;
+            
+            // Update performance averages
+            Object.keys(performanceData).forEach(type => {
+                if (performanceData[type].length > 0) {
+                    let avg = performanceData[type].reduce((a, b) => a + b, 0) / performanceData[type].length;
+                    document.getElementById(type + '-avg').textContent = avg.toFixed(3);
+                }
+            });
+            
+            // Reset episode every 1000 steps
+            if (stepCount >= 1000) {
+                stepCount = 0;
+                episodeCount++;
+                document.getElementById('episode-count').textContent = episodeCount;
+                
+                // Reset agent positions and rewards
+                demoAgents.forEach(agent => {
+                    agent.x = Math.random() * (canvas.width - 100) + 50;
+                    agent.y = Math.random() * (canvas.height - 100) + 50;
+                    agent.reward = 0;
+                    agent.energy = 100;
+                });
+            }
+        }
+        
+        function drawSimulation() {
+            // Clear canvas
+            ctx.fillStyle = '#ecf0f1';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw food (red circles)
+            ctx.fillStyle = '#e74c3c';
+            demoFood.forEach(food => {
+                ctx.beginPath();
+                ctx.arc(food.x, food.y, food.radius, 0, 2 * Math.PI);
+                ctx.fill();
+            });
+            
+            // Draw poison (green circles)
+            ctx.fillStyle = '#27ae60';
+            demoPoison.forEach(poison => {
+                ctx.beginPath();
+                ctx.arc(poison.x, poison.y, poison.radius, 0, 2 * Math.PI);
+                ctx.fill();
+            });
+            
+            // Draw agents
+            demoAgents.forEach(agent => {
+                const color = agentColors[agent.type] || '#95a5a6';
+                
+                // Agent body
+                ctx.fillStyle = color;
+                ctx.beginPath();
+                ctx.arc(agent.x, agent.y, agent.radius, 0, 2 * Math.PI);
+                ctx.fill();
+                
+                // Agent direction indicator
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(agent.x, agent.y);
+                ctx.lineTo(
+                    agent.x + Math.cos(agent.angle) * agent.radius * 1.5,
+                    agent.y + Math.sin(agent.angle) * agent.radius * 1.5
+                );
+                ctx.stroke();
+                
+                // Agent ID
+                ctx.fillStyle = '#2c3e50';
+                ctx.font = '10px Courier New';
+                ctx.textAlign = 'center';
+                ctx.fillText(agent.id.toString(), agent.x, agent.y - 15);
+            });
+        }
+        
+        function updateStatus(text, type) {
+            document.getElementById('status-text').textContent = text;
+            const indicator = document.getElementById('status-indicator');
+            indicator.className = 'status-indicator status-' + type;
+        }
+        
+        // Control functions
+        function startSimulation() {
+            simulationRunning = true;
+            updateStatus('Running', 'running');
+            updateSimulation();
+            console.log('Simulation started');
+        }
+        
+        function pauseSimulation() {
+            simulationRunning = false;
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+            }
+            updateStatus('Paused', 'paused');
+            console.log('Simulation paused');
+        }
+        
+        function stopSimulation() {
+            simulationRunning = false;
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+            }
+            updateStatus('Stopped', 'stopped');
+            createDemoEnvironment();
+            initializeCanvas();
+            console.log('Simulation stopped');
+        }
+        
+        function resetSimulation() {
+            stopSimulation();
+            createDemoEnvironment();
+            drawSimulation();
+            console.log('Simulation reset');
+        }
+        
+        function startTraining() {
+            updateStatus('Training', 'training');
+            console.log('Training started');
+        }
+        
+        function stopTraining() {
+            updateStatus('Running', 'running');
+            console.log('Training stopped');
+        }
+        
+        function setSpeed(multiplier) {
+            console.log('Speed set to:', multiplier + 'x');
+            document.getElementById('speed-display').textContent = multiplier.toFixed(1) + 'x';
+        }
+        
+        function updatePopulation() {
+            const paramsText = document.getElementById('population-params').value;
+            console.log('Population updated with:', paramsText);
+        }
+        
+        function loadExperiment(experimentType) {
+            console.log('Loading experiment:', experimentType);
+            
+            // Update population based on experiment
+            let paramsText = '';
+            switch(experimentType) {
+                case 'pure_curious':
+                    paramsText = 'curious_agents = 8\ncompetitive_agents = 0\nhybrid_agents = 0\nadaptive_agents = 0';
+                    break;
+                case 'pure_competitive':
+                    paramsText = 'curious_agents = 0\ncompetitive_agents = 8\nhybrid_agents = 0\nadaptive_agents = 0';
+                    break;
+                case 'mixed_pop':
+                    paramsText = 'curious_agents = 2\ncompetitive_agents = 2\nhybrid_agents = 2\nadaptive_agents = 2';
+                    break;
+                case 'hybrid_evolution':
+                    paramsText = 'curious_agents = 0\ncompetitive_agents = 0\nhybrid_agents = 4\nadaptive_agents = 4';
+                    break;
+            }
+            
+            if (paramsText) {
+                document.getElementById('population-params').value = paramsText + '\n\n# Environment\nworld_size = 800x600\nmax_food = 20\nfood_spawn_rate = 0.1\n\n# Reward weights\ncuriosity_weight = 0.3\ncompetition_weight = 0.4\ncooperation_weight = 0.2\nsurvival_weight = 0.1';
+            }
+        }
+        
+        // Initialize demo visualization
+        setTimeout(() => {
+            drawSimulation();
+        }, 100);
+    </script>
+</body>
+</html>

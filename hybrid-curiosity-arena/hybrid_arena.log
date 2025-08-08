@@ -1,0 +1,99 @@
+2025-07-18 18:47:09,102 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:6000
+ * Running on http://192.168.1.157:6000
+2025-07-18 18:47:09,102 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-07-18 18:48:50,040 - werkzeug - INFO - 127.0.0.1 - - [18/Jul/2025 18:48:50] "GET /api/status HTTP/1.1" 200 -
+2025-07-18 18:48:56,394 - werkzeug - INFO - 127.0.0.1 - - [18/Jul/2025 18:48:56] "GET / HTTP/1.1" 200 -
+2025-07-18 18:53:45,079 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:8000
+ * Running on http://192.168.1.157:8000
+2025-07-18 18:53:45,079 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-07-18 18:53:47,471 - werkzeug - INFO - 127.0.0.1 - - [18/Jul/2025 18:53:47] "GET / HTTP/1.1" 200 -
+2025-07-18 18:53:47,558 - werkzeug - INFO - 127.0.0.1 - - [18/Jul/2025 18:53:47] "GET /api/status HTTP/1.1" 200 -
+2025-07-18 18:53:47,558 - werkzeug - INFO - 127.0.0.1 - - [18/Jul/2025 18:53:47] "GET /socket.io/?EIO=4&transport=polling&t=PWVlcAZ HTTP/1.1" 200 -
+2025-07-18 18:53:47,562 - werkzeug - INFO - 127.0.0.1 - - [18/Jul/2025 18:53:47] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2025-07-18 18:53:47,566 - web.unified_interface - INFO - Client connected
+2025-07-18 18:53:47,567 - werkzeug - INFO - 127.0.0.1 - - [18/Jul/2025 18:53:47] "POST /socket.io/?EIO=4&transport=polling&t=PWVlcAf&sid=b95d861F65G3f3YXAAAA HTTP/1.1" 200 -
+2025-07-18 18:53:47,573 - werkzeug - INFO - 127.0.0.1 - - [18/Jul/2025 18:53:47] "GET /socket.io/?EIO=4&transport=polling&t=PWVlcAg&sid=b95d861F65G3f3YXAAAA HTTP/1.1" 200 -
+2025-07-18 18:53:47,594 - werkzeug - INFO - 127.0.0.1 - - [18/Jul/2025 18:53:47] "GET /socket.io/?EIO=4&transport=polling&t=PWVlcB8&sid=b95d861F65G3f3YXAAAA HTTP/1.1" 200 -
+2025-07-18 18:55:22,942 - web.unified_interface - INFO - Client disconnected
+2025-07-18 18:55:22,942 - werkzeug - INFO - 127.0.0.1 - - [18/Jul/2025 18:55:22] "GET /socket.io/?EIO=4&transport=websocket&sid=b95d861F65G3f3YXAAAA HTTP/1.1" 200 -
+2025-07-18 18:57:42,324 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:4000
+ * Running on http://192.168.1.157:4000
+2025-07-18 18:57:42,324 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-07-18 18:58:58,802 - werkzeug - INFO - 127.0.0.1 - - [18/Jul/2025 18:58:58] "GET /api/status HTTP/1.1" 200 -
+2025-07-18 18:59:05,252 - werkzeug - INFO - 127.0.0.1 - - [18/Jul/2025 18:59:05] "GET / HTTP/1.1" 200 -
+2025-07-18 19:00:04,067 - werkzeug - INFO - 127.0.0.1 - - [18/Jul/2025 19:00:04] "GET / HTTP/1.1" 200 -
+2025-07-18 19:00:24,364 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:2000
+ * Running on http://192.168.1.157:2000
+2025-07-18 19:00:24,364 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-07-18 19:01:11,910 - werkzeug - INFO - 127.0.0.1 - - [18/Jul/2025 19:01:11] "GET / HTTP/1.1" 200 -
+2025-07-18 19:01:11,989 - werkzeug - INFO - 127.0.0.1 - - [18/Jul/2025 19:01:11] "GET /api/status HTTP/1.1" 200 -
+2025-07-18 19:01:11,989 - werkzeug - INFO - 127.0.0.1 - - [18/Jul/2025 19:01:11] "GET /socket.io/?EIO=4&transport=polling&t=PWVnIgn HTTP/1.1" 200 -
+2025-07-18 19:01:11,995 - werkzeug - INFO - 127.0.0.1 - - [18/Jul/2025 19:01:11] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2025-07-18 19:01:11,999 - web.unified_interface - INFO - Client connected
+2025-07-18 19:01:12,000 - werkzeug - INFO - 127.0.0.1 - - [18/Jul/2025 19:01:12] "POST /socket.io/?EIO=4&transport=polling&t=PWVnIgv&sid=FszfUvPUIGdX3hKgAAAA HTTP/1.1" 200 -
+2025-07-18 19:01:12,003 - werkzeug - INFO - 127.0.0.1 - - [18/Jul/2025 19:01:12] "GET /socket.io/?EIO=4&transport=polling&t=PWVnIgw&sid=FszfUvPUIGdX3hKgAAAA HTTP/1.1" 200 -
+2025-07-18 19:06:41,127 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:2000
+ * Running on http://192.168.1.157:2000
+2025-07-18 19:06:41,127 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-07-18 19:06:46,476 - werkzeug - INFO - 127.0.0.1 - - [18/Jul/2025 19:06:46] "GET /socket.io/?EIO=4&transport=polling&t=PWVoaL9 HTTP/1.1" 200 -
+2025-07-18 19:06:46,479 - web.unified_interface - INFO - Client connected
+2025-07-18 19:06:46,480 - werkzeug - INFO - 127.0.0.1 - - [18/Jul/2025 19:06:46] "POST /socket.io/?EIO=4&transport=polling&t=PWVoaLD&sid=XScIFAH2-_PrWWaVAAAA HTTP/1.1" 200 -
+2025-07-18 19:06:46,481 - werkzeug - INFO - 127.0.0.1 - - [18/Jul/2025 19:06:46] "GET /socket.io/?EIO=4&transport=polling&t=PWVoaLE&sid=XScIFAH2-_PrWWaVAAAA HTTP/1.1" 200 -
+2025-07-18 19:11:23,327 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:2000
+ * Running on http://192.168.1.157:2000
+2025-07-18 19:11:23,328 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-07-18 19:11:26,639 - werkzeug - INFO - 127.0.0.1 - - [18/Jul/2025 19:11:26] "GET /socket.io/?EIO=4&transport=polling&t=PWVpeke HTTP/1.1" 200 -
+2025-07-18 19:11:26,682 - web.unified_interface - INFO - Client connected
+2025-07-18 19:11:26,684 - werkzeug - INFO - 127.0.0.1 - - [18/Jul/2025 19:11:26] "POST /socket.io/?EIO=4&transport=polling&t=PWVpelL&sid=apYZBb21dGZDjwFaAAAA HTTP/1.1" 200 -
+2025-07-18 19:11:26,685 - werkzeug - INFO - 127.0.0.1 - - [18/Jul/2025 19:11:26] "GET /socket.io/?EIO=4&transport=polling&t=PWVpelM&sid=apYZBb21dGZDjwFaAAAA HTTP/1.1" 200 -
+2025-07-18 19:19:46,433 - web.unified_interface - INFO - Client disconnected
+2025-07-18 19:19:46,434 - werkzeug - INFO - 127.0.0.1 - - [18/Jul/2025 19:19:46] "GET /socket.io/?EIO=4&transport=websocket&sid=apYZBb21dGZDjwFaAAAA HTTP/1.1" 200 -
+2025-07-18 19:19:46,453 - werkzeug - INFO - 127.0.0.1 - - [18/Jul/2025 19:19:46] "GET / HTTP/1.1" 200 -
+2025-07-18 19:19:46,510 - werkzeug - INFO - 127.0.0.1 - - [18/Jul/2025 19:19:46] "GET /socket.io/?EIO=4&transport=polling&t=PWVrYnB HTTP/1.1" 200 -
+2025-07-18 19:19:46,518 - web.unified_interface - INFO - Client connected
+2025-07-18 19:19:46,520 - werkzeug - INFO - 127.0.0.1 - - [18/Jul/2025 19:19:46] "POST /socket.io/?EIO=4&transport=polling&t=PWVrYnG&sid=mUDrn6FNSN_Huel-AAAC HTTP/1.1" 200 -
+2025-07-18 19:19:46,521 - werkzeug - INFO - 127.0.0.1 - - [18/Jul/2025 19:19:46] "GET /socket.io/?EIO=4&transport=polling&t=PWVrYnH&sid=mUDrn6FNSN_Huel-AAAC HTTP/1.1" 200 -
+2025-07-18 19:19:46,527 - werkzeug - INFO - 127.0.0.1 - - [18/Jul/2025 19:19:46] "GET /socket.io/?EIO=4&transport=polling&t=PWVrYnT&sid=mUDrn6FNSN_Huel-AAAC HTTP/1.1" 200 -
+2025-07-18 19:22:16,737 - werkzeug - INFO - 127.0.0.1 - - [18/Jul/2025 19:22:16] "GET / HTTP/1.1" 200 -
+2025-07-18 19:22:16,890 - werkzeug - INFO - 127.0.0.1 - - [18/Jul/2025 19:22:16] "GET /socket.io/?EIO=4&transport=polling&t=PWVs7Ut HTTP/1.1" 200 -
+2025-07-18 19:22:16,902 - web.unified_interface - INFO - Client connected
+2025-07-18 19:22:16,911 - werkzeug - INFO - 127.0.0.1 - - [18/Jul/2025 19:22:16] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2025-07-18 19:22:16,911 - werkzeug - INFO - 127.0.0.1 - - [18/Jul/2025 19:22:16] "GET /socket.io/?EIO=4&transport=polling&t=PWVs7V7&sid=dWM9qOSmDVAXSy2aAAAE HTTP/1.1" 200 -
+2025-07-18 19:22:16,919 - werkzeug - INFO - 127.0.0.1 - - [18/Jul/2025 19:22:16] "POST /socket.io/?EIO=4&transport=polling&t=PWVs7V4&sid=dWM9qOSmDVAXSy2aAAAE HTTP/1.1" 200 -
+2025-07-18 19:22:42,330 - web.unified_interface - INFO - Client disconnected
+2025-07-18 19:22:42,330 - werkzeug - INFO - 127.0.0.1 - - [18/Jul/2025 19:22:42] "GET /socket.io/?EIO=4&transport=websocket&sid=mUDrn6FNSN_Huel-AAAC HTTP/1.1" 200 -
+2025-07-18 19:23:36,007 - web.unified_interface - INFO - Client disconnected
+2025-07-18 19:23:36,008 - werkzeug - INFO - 127.0.0.1 - - [18/Jul/2025 19:23:36] "GET /socket.io/?EIO=4&transport=websocket&sid=dWM9qOSmDVAXSy2aAAAE HTTP/1.1" 200 -
+2025-07-18 19:24:06,589 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:2000
+ * Running on http://192.168.1.157:2000
+2025-07-18 19:24:06,589 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-07-18 19:24:35,635 - werkzeug - INFO - 127.0.0.1 - - [18/Jul/2025 19:24:35] "GET / HTTP/1.1" 200 -
+2025-07-18 19:24:35,685 - werkzeug - INFO - 127.0.0.1 - - [18/Jul/2025 19:24:35] "GET /socket.io/?EIO=4&transport=polling&t=PWVsfNZ HTTP/1.1" 200 -
+2025-07-18 19:24:35,712 - web.unified_interface - INFO - Client connected
+2025-07-18 19:24:35,712 - werkzeug - INFO - 127.0.0.1 - - [18/Jul/2025 19:24:35] "POST /socket.io/?EIO=4&transport=polling&t=PWVsfNz&sid=mnmzsAVrORLjb4B4AAAA HTTP/1.1" 200 -
+2025-07-18 19:24:35,714 - werkzeug - INFO - 127.0.0.1 - - [18/Jul/2025 19:24:35] "GET /socket.io/?EIO=4&transport=polling&t=PWVsfN-&sid=mnmzsAVrORLjb4B4AAAA HTTP/1.1" 200 -
+2025-07-18 19:24:35,718 - werkzeug - INFO - 127.0.0.1 - - [18/Jul/2025 19:24:35] "GET /socket.io/?EIO=4&transport=polling&t=PWVsfO4&sid=mnmzsAVrORLjb4B4AAAA HTTP/1.1" 200 -
+2025-07-18 21:52:45,680 - werkzeug - INFO - 127.0.0.1 - - [18/Jul/2025 21:52:45] "GET / HTTP/1.1" 200 -
+2025-07-18 21:52:45,724 - werkzeug - INFO - 127.0.0.1 - - [18/Jul/2025 21:52:45] "GET /socket.io/?EIO=4&transport=polling&t=PWWOZoQ HTTP/1.1" 200 -
+2025-07-18 21:52:45,759 - web.unified_interface - INFO - Client connected
+2025-07-18 21:52:45,761 - werkzeug - INFO - 127.0.0.1 - - [18/Jul/2025 21:52:45] "POST /socket.io/?EIO=4&transport=polling&t=PWWOZoz&sid=7SPshfgK-hzjDCfRAAAC HTTP/1.1" 200 -
+2025-07-18 21:52:45,761 - werkzeug - INFO - 127.0.0.1 - - [18/Jul/2025 21:52:45] "GET /socket.io/?EIO=4&transport=polling&t=PWWOZo-&sid=7SPshfgK-hzjDCfRAAAC HTTP/1.1" 200 -
+2025-07-18 21:52:45,776 - werkzeug - INFO - 127.0.0.1 - - [18/Jul/2025 21:52:45] "GET /socket.io/?EIO=4&transport=polling&t=PWWOZpF&sid=7SPshfgK-hzjDCfRAAAC HTTP/1.1" 200 -
+2025-07-18 21:53:04,211 - web.unified_interface - INFO - Client disconnected
+2025-07-18 21:53:04,211 - werkzeug - INFO - 127.0.0.1 - - [18/Jul/2025 21:53:04] "GET /socket.io/?EIO=4&transport=websocket&sid=mnmzsAVrORLjb4B4AAAA HTTP/1.1" 200 -
+2025-07-18 21:53:05,143 - web.unified_interface - INFO - Client disconnected
+2025-07-18 21:53:05,144 - werkzeug - INFO - 127.0.0.1 - - [18/Jul/2025 21:53:05] "GET /socket.io/?EIO=4&transport=websocket&sid=7SPshfgK-hzjDCfRAAAC HTTP/1.1" 200 -
