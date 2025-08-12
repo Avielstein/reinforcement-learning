@@ -1,0 +1,12 @@
+# Core dependencies
+numpy>=1.21.0
+torch>=1.9.0
+matplotlib>=3.5.0
+scikit-learn>=1.0.0
+gym>=0.21.0
+
+# For CFL visualization
+networkx>=2.6.0
+
+# Optional: for better performance
+# torchvision>=0.10.0  # if using GPU
