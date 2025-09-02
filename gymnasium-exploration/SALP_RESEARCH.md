@@ -132,5 +132,54 @@
 
 ---
 
+## Additional Research - Dubins Vehicle Dynamics
+
+### Key Papers Added:
+1. **"Closed-Form Solutions for Minimum-Time Paths of Dubins Airplane in Steady Wind"** (2024)
+   - ArXiv: https://arxiv.org/abs/2412.04797
+   - Dubins vehicle path planning with wind effects
+   - CSC, CCC, SC, CC path configurations
+
+2. **"3D Dubins Curve-Based Path Planning for UUV in Unknown Environments Using an Improved RRT* Algorithm"** (2025)
+   - MDPI: https://www.mdpi.com/2077-1312/13/7/1354
+   - 3D Dubins curves for underwater vehicles
+   - Nonholonomic constraints for UUVs
+
+### Dubins Vehicle Principles:
+- **Constant Forward Speed**: Vehicle always moves forward at fixed velocity
+- **Minimum Turning Radius**: Cannot turn sharper than r_min constraint
+- **Path Segments**: Combinations of straight lines (S) and circular arcs (C)
+- **Optimal Paths**: CSC (curve-straight-curve), CCC (curve-curve-curve), etc.
+- **No Lateral Movement**: Cannot move sideways (nonholonomic constraint)
+
+### Critical Implementation Corrections:
+
+#### **Breathing Cycle Timing**:
+- **Previous**: 12 frames (0.2 seconds) - WAY TOO FAST
+- **Corrected**: 2-3 seconds per phase (120-180 frames at 60fps)
+- **Biological Reality**: Salps have slow, deliberate breathing cycles underwater
+
+#### **Control Scheme**:
+- **Previous**: Binary pulse trigger (instant on/off)
+- **Corrected**: Hold-to-inhale system
+  - **Hold SPACE**: Slow contraction (inhale water)
+  - **Release SPACE**: Slow expansion (exhale water → thrust)
+- **Underwater Physics**: Everything slower due to water resistance
+
+#### **Movement Dynamics**:
+- **Add Dubins Constraints**: Minimum turning radius for realistic movement
+- **Body Orientation**: Agent points in movement direction
+- **Smooth Turns**: No sharp direction changes, only curved paths
+- **Forward Thrust**: Always in direction of body orientation
+
+### Implementation Priority:
+1. **Slow breathing cycles** (2-3 second phases)
+2. **Hold-to-inhale controls** (space bar mechanics)
+3. **Dubins vehicle dynamics** (turning radius constraints)
+4. **Smooth body orientation** (gradual direction changes)
+
+---
+
 *Last Updated: January 2025*
 *Focus: Simplified implementation for gymnasium environment experimentation*
+*Updated: Added Dubins vehicle dynamics and corrected breathing cycle timing*
